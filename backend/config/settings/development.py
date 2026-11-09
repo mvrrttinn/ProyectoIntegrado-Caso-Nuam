@@ -1,23 +1,61 @@
-from .base import *
+import os
 
-# Conversión robusta de booleano
-DJANGO_DEBUG = os.getenv('DJANGO_DEBUG', 'True')
-DEBUG = DJANGO_DEBUG.lower() in ('true', '1', 't')
+import dj_database_url
 
-# Obtener hosts permitidos con predeterminados locales
-allowed_hosts_env = os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1')
-ALLOWED_HOSTS = allowed_hosts_env.split(',')
+from .base import *  # noqa: F401, F403
 
-# Configuración temporal de base de datos local
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+
+DEBUG = os.getenv(
+    "DJANGO_DEBUG",
+    "True",
+).strip().lower() in {
+    "1",
+    "true",
+    "yes",
+    "on",
 }
 
-# CORS configurado exclusivamente para Vite en desarrollo local
+
+allowed_hosts_env = os.getenv(
+    "DJANGO_ALLOWED_HOSTS",
+    "localhost,127.0.0.1",
+)
+
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in allowed_hosts_env.split(",")
+    if host.strip()
+]
+
+
+DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
+
+if not DATABASE_URL:
+    raise RuntimeError(
+        "DATABASE_URL no está configurada. "
+        "Agrega la conexión PostgreSQL de Supabase en backend/.env."
+    )
+
+
+DATABASES = {
+    "default": dj_database_url.parse(
+        DATABASE_URL,
+        conn_max_age=60,
+        conn_health_checks=True,
+        ssl_require=True,
+    )
+}
+
+DATABASES["default"].setdefault("OPTIONS", {})
+DATABASES["default"]["OPTIONS"]["connect_timeout"] = 10
+
+
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
 ]
+
+
+REST_FRAMEWORK["DEFAULT_RENDERER_CLASSES"] += (
+    "rest_framework.renderers.BrowsableAPIRenderer",
+)
