@@ -1,99 +1,53 @@
-# ============================================
-# Python
-# ============================================
+# ==========================================
+# VARIABLES DE ENTORNO Y SECRETOS (CRÍTICO)
+# ==========================================
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials.json
+service-account.json
 
+# ==========================================
+# BACKEND: PYTHON & DJANGO
+# ==========================================
+backend/.venv/
+.venv/
+venv/
+ENV/
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
-.Python
-.pytest_cache/
-.mypy_cache/
-.coverage
-coverage.xml
-htmlcov/
-
-# ============================================
-# Virtual environments
-# ============================================
-
-.venv/
-venv/
-env/
-ENV/
-backend/.venv/
-
-# ============================================
-# Django
-# ============================================
-
-*.log
 db.sqlite3
 db.sqlite3-journal
 media/
-staticfiles/
-backend/media/
-backend/staticfiles/
+static/
+.pytest_cache/
+.coverage
+htmlcov/
 
-# ============================================
-# Environment variables and secrets
-# ============================================
-
-.env
-.env.*
-!.env.example
-backend/.env
-frontend/.env
-frontend/.env.local
-frontend/.env.development.local
-frontend/.env.production.local
-
-# ============================================
-# Node, React and Vite
-# ============================================
-
+# ==========================================
+# FRONTEND: NODE, REACT & VITE
+# ==========================================
 node_modules/
-frontend/node_modules/
-dist/
 frontend/dist/
-.vite/
+frontend/dist-ssr/
+.npm/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# ============================================
-# Testing
-# ============================================
-
-coverage/
-playwright-report/
-test-results/
-
-# ============================================
-# IDE
-# ============================================
-
-.vscode/*
-!.vscode/extensions.json
-!.vscode/settings.json
+# ==========================================
+# ENTORNO DE DESARROLLO (IDE) Y OS
+# ==========================================
 .idea/
-
-# ============================================
-# Operating system
-# ============================================
-
+*.swp
+*.swo
 .DS_Store
 Thumbs.db
-Desktop.ini
-
-# ============================================
-# Credentials and keys
-# ============================================
-
-*.pem
-*.key
-*.p12
-*.pfx
-credentials.json
-service-account.json
+# Permitir configuraciones colaborativas de VS Code:
+!.vscode/settings.json
+!.vscode/extensions.json
