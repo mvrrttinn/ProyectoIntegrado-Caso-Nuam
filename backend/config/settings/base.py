@@ -28,6 +28,7 @@ INSTALLED_APPS = [
     
     # Local apps (se añadirán aquí en el futuro)
     'apps.core.apps.CoreConfig',
+    'apps.identity.apps.IdentityConfig',
 ]
 
 MIDDLEWARE = [
