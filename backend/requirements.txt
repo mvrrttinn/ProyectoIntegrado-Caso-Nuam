@@ -1,7 +1,10 @@
 asgiref==3.13.0
+dj-database-url==2.1.0
 Django==5.2.19
 django-cors-headers==4.9.0
 djangorestframework==3.18.3
+psycopg-binary==3.1.19
 python-dotenv==1.2.4
 sqlparse==0.6.1
+typing_extensions==4.16.0
 tzdata==2026.6
