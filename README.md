@@ -21,9 +21,9 @@ El proyecto se rige bajo el **Modelo 4+1 Vistas de Kruchten** y una **persistenc
 
 ### 1. Backend (Django)
 ```powershell
+# Activar en cmd (Command Prompt):
 cd backend
 python -m venv .venv
-# Activar en Windows PowerShell:
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 python manage.py migrate
