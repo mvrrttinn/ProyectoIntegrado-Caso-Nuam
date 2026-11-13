@@ -11,8 +11,16 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
   const [password, setPassword] = useState('Nuam2026!');
   const [rol, setRol] = useState<RolNombre>('Operador Corredora');
   const [codigoMfa, setCodigoMfa] = useState('123456');
+  const [tokenMfaGenerado, setTokenMfaGenerado] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const generarNuevoMfa = () => {
+    const nuevoCodigo = Math.floor(100000 + Math.random() * 900000).toString();
+    setCodigoMfa(nuevoCodigo);
+    setTokenMfaGenerado(nuevoCodigo);
+    setErrorMsg(null);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -103,7 +111,17 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
             </div>
 
             <div className="form-group w-mfa">
-              <label htmlFor="input-mfa">Código MFA (6 dígitos)</label>
+              <div className="flex justify-between items-center">
+                <label htmlFor="input-mfa">Código MFA</label>
+                <button
+                  type="button"
+                  className="btn-link text-xs"
+                  onClick={generarNuevoMfa}
+                  title="Simular código OTP enviado a dispositivo móvil"
+                >
+                  📲 Generar OTP
+                </button>
+              </div>
               <input
                 id="input-mfa"
                 type="text"
@@ -116,6 +134,12 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
               />
             </div>
           </div>
+
+          {tokenMfaGenerado && (
+            <div className="alert-banner alert-success py-2 text-xs">
+              <span>📲 <strong>Token MFA Generado:</strong> Código <code>{tokenMfaGenerado}</code> enviado al dispositivo del usuario (Válido 60s).</span>
+            </div>
+          )}
 
           <button
             type="submit"

@@ -178,14 +178,18 @@ class ApiClient {
   }
 
   async updateUsuarioRol(idUsuario: number, idRol: number): Promise<any> {
+    return this.updateUsuario(idUsuario, { id_rol: idRol });
+  }
+
+  async updateUsuario(idUsuario: number, data: { id_rol?: number; password?: string; estado?: string }): Promise<any> {
     const res = await fetch(`${API_BASE_URL}/usuarios/${idUsuario}/`, {
       method: 'PATCH',
       headers: this.getHeaders(),
-      body: JSON.stringify({ id_rol: idRol })
+      body: JSON.stringify(data)
     });
     if (!res.ok) {
       const err = await res.json();
-      throw new Error(err.error || 'Error al actualizar rol del usuario.');
+      throw new Error(err.error || 'Error al actualizar usuario.');
     }
     return res.json();
   }

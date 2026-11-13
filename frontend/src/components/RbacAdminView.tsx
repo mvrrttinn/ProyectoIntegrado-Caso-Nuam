@@ -8,10 +8,15 @@ export const RbacAdminView: React.FC = () => {
   const [mensaje, setMensaje] = useState<{ tipo: 'success' | 'error'; texto: string } | null>(null);
   const [modalNuevo, setModalNuevo] = useState(false);
 
+  // Modal para cambiar contraseña
+  const [usuarioParaPass, setUsuarioParaPass] = useState<any | null>(null);
+  const [nuevaPasswordCustom, setNuevaPasswordCustom] = useState('');
+
   // Formulario nuevo usuario
   const [nuevoNombre, setNuevoNombre] = useState('');
   const [nuevoRut, setNuevoRut] = useState('');
   const [nuevoEmail, setNuevoEmail] = useState('');
+  const [nuevaPassword, setNuevaPassword] = useState('Nuam2026!');
   const [nuevaCorredora, setNuevaCorredora] = useState('LarrainVial S.A. Corredora');
   const [nuevoRolId, setNuevoRolId] = useState<number>(1);
   const [guardando, setGuardando] = useState(false);
@@ -67,21 +72,45 @@ export const RbacAdminView: React.FC = () => {
         email: nuevoEmail.trim(),
         id_corredora: nuevaCorredora.trim(),
         id_rol: nuevoRolId,
-        password: 'Nuam2026!'
+        password: nuevaPassword.trim() || 'Nuam2026!'
       });
       setMensaje({
         tipo: 'success',
-        texto: `✅ Usuario '${nuevoNombre}' creado exitosamente con contraseña temporal 'Nuam2026!' y token MFA activo.`
+        texto: `✅ Usuario '${nuevoNombre}' creado exitosamente con su contraseña personalizada configurada y código MFA activo.`
       });
       setModalNuevo(false);
       setNuevoNombre('');
       setNuevoRut('');
       setNuevoEmail('');
+      setNuevaPassword('Nuam2026!');
       cargarDatos();
     } catch (err: any) {
       setMensaje({
         tipo: 'error',
         texto: err.message || 'Error al crear el nuevo usuario.'
+      });
+    } finally {
+      setGuardando(false);
+    }
+  };
+
+  const handleGuardarNuevaPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!usuarioParaPass || !nuevaPasswordCustom) return;
+
+    setGuardando(true);
+    try {
+      await api.updateUsuario(usuarioParaPass.id_usuario, { password: nuevaPasswordCustom });
+      setMensaje({
+        tipo: 'success',
+        texto: `✅ Contraseña personalizada actualizada con éxito para '${usuarioParaPass.nombre || usuarioParaPass.email}'. Hasheada con PBKDF2 en la base de datos.`
+      });
+      setUsuarioParaPass(null);
+      setNuevaPasswordCustom('');
+    } catch (err: any) {
+      setMensaje({
+        tipo: 'error',
+        texto: err.message || 'Error al actualizar la contraseña.'
       });
     } finally {
       setGuardando(false);
@@ -94,7 +123,7 @@ export const RbacAdminView: React.FC = () => {
         <div>
           <h2 className="view-title">Gobernanza de Accesos y Seguridad RBAC (CU-07)</h2>
           <p className="view-subtitle">
-            Administración de privilegios, asignación dinámica de roles y cumplimiento ISO/IEC 27001 Control A.9.
+            Administración de privilegios, asignación dinámica de roles y contraseñas personalizadas (ISO/IEC 27001).
           </p>
         </div>
         <div className="view-actions">
@@ -179,7 +208,7 @@ export const RbacAdminView: React.FC = () => {
           <div>
             <h3 className="card-title">Directorio de Usuarios y Asignación de Roles</h3>
             <p className="card-subtitle">
-              Cambia el rol de un usuario directamente desde el desplegable para modificar sus permisos de inmediato.
+              Cambia el rol de un usuario directamente desde el desplegable o personaliza su contraseña de acceso.
             </p>
           </div>
           <span className="badge-audit-count">{usuarios.length} Usuarios Registrados</span>
@@ -197,6 +226,7 @@ export const RbacAdminView: React.FC = () => {
                   <th>Correo Institucional</th>
                   <th>Institución / Corredora</th>
                   <th>Rol Actual / Asignar Nuevo Rol</th>
+                  <th>Seguridad</th>
                   <th>Estado</th>
                 </tr>
               </thead>
@@ -219,6 +249,18 @@ export const RbacAdminView: React.FC = () => {
                           </option>
                         ))}
                       </select>
+                    </td>
+                    <td>
+                      <button
+                        type="button"
+                        className="btn-action-sm"
+                        onClick={() => {
+                          setUsuarioParaPass(u);
+                          setNuevaPasswordCustom('');
+                        }}
+                      >
+                        🔑 Cambiar Clave
+                      </button>
                     </td>
                     <td>
                       <span className={`status-pill ${u.estado === 'ACTIVO' ? 'status-aprobado' : 'status-observado'}`}>
@@ -285,7 +327,7 @@ export const RbacAdminView: React.FC = () => {
 
                 <div className="form-row mb-4">
                   <div className="form-group flex-1">
-                    <label htmlFor="modal-corredora">Institución:</label>
+                    <label htmlFor="modal-corredora">Institución / Corredora:</label>
                     <input
                       id="modal-corredora"
                       type="text"
@@ -312,8 +354,21 @@ export const RbacAdminView: React.FC = () => {
                   </div>
                 </div>
 
+                <div className="form-group mb-4">
+                  <label htmlFor="modal-pass">Contraseña Personalizada:</label>
+                  <input
+                    id="modal-pass"
+                    type="text"
+                    className="form-input font-mono"
+                    value={nuevaPassword}
+                    onChange={(e) => setNuevaPassword(e.target.value)}
+                    placeholder="Escribe la clave que desees (ej: MiClaveSegura2026!)"
+                    required
+                  />
+                </div>
+
                 <div className="alert-box-notice">
-                  ℹ️ El nuevo usuario se registrará con la contraseña provisional <code>Nuam2026!</code> y código MFA <code>123456</code>.
+                  ℹ️ La contraseña se cifrará de forma irreversible mediante el algoritmo <code>PBKDF2 SHA-256</code> en cumplimiento de la norma ISO/IEC 27001. El código MFA asignado será cualquier código numérico de 6 dígitos.
                 </div>
               </div>
 
@@ -323,6 +378,47 @@ export const RbacAdminView: React.FC = () => {
                 </button>
                 <button type="submit" className="btn-primary" disabled={guardando}>
                   {guardando ? 'Guardando...' : 'Crear Usuario'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Cambiar Contraseña de Usuario */}
+      {usuarioParaPass && (
+        <div className="modal-backdrop" onClick={() => setUsuarioParaPass(null)}>
+          <div className="modal-dialog" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3 className="modal-title">Cambiar Contraseña — {usuarioParaPass.nombre || usuarioParaPass.email}</h3>
+              <button type="button" className="btn-close" onClick={() => setUsuarioParaPass(null)}>✕</button>
+            </div>
+            <form onSubmit={handleGuardarNuevaPassword}>
+              <div className="modal-body">
+                <p className="text-sm text-muted mb-4">
+                  Ingresa una nueva contraseña personalizada para el usuario con RUT <strong>{usuarioParaPass.rut}</strong>:
+                </p>
+
+                <div className="form-group mb-4">
+                  <label htmlFor="input-new-pass">Nueva Contraseña:</label>
+                  <input
+                    id="input-new-pass"
+                    type="text"
+                    className="form-input font-mono"
+                    value={nuevaPasswordCustom}
+                    onChange={(e) => setNuevaPasswordCustom(e.target.value)}
+                    placeholder="Escribe la nueva contraseña personalizada"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="modal-footer">
+                <button type="button" className="btn-secondary mr-2" onClick={() => setUsuarioParaPass(null)}>
+                  Cancelar
+                </button>
+                <button type="submit" className="btn-primary" disabled={guardando}>
+                  {guardando ? 'Actualizando...' : 'Guardar Nueva Contraseña'}
                 </button>
               </div>
             </form>

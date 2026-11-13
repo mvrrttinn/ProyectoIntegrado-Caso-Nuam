@@ -370,12 +370,20 @@ class UsuarioDetailView(APIView):
         if estado:
             usuario.estado = estado
 
+        password = request.data.get('password')
+        if password:
+            usuario.cambiar_contrasena(password)
+
         usuario.save()
+
+        detalles_audit = {'usuario_afectado': usuario.email, 'nuevo_rol': usuario.id_rol.nombre_rol}
+        if password:
+            detalles_audit['password_modificada'] = True
 
         AuditAlertsService.registrar_evento(
             usuario=request.user,
-            accion="ACTUALIZACION_ROL_RBAC",
-            detalles_extra={'usuario_afectado': usuario.email, 'nuevo_rol': usuario.id_rol.nombre_rol}
+            accion="ACTUALIZACION_USUARIO_RBAC",
+            detalles_extra=detalles_audit
         )
 
         serializer = UsuarioSerializer(usuario)
