@@ -57,22 +57,46 @@ class ApiClient {
     rol?: string,
     tokenOtpGenerado?: string
   ): Promise<{ token: string; usuario: UsuarioAutenticado }> {
-    const res = await fetch(`${API_BASE_URL}/auth/login/`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        identificador,
-        password,
-        codigo_mfa: codigoMfa,
-        rol: rol || '',
-        token_otp_generado: tokenOtpGenerado || ''
-      })
-    });
-
-    const data = await res.json();
-    if (!res.ok) {
-      throw new Error(data.mensaje || data.error || 'Fallo de autenticación.');
+    let res: Response;
+    try {
+      res = await fetch(`${API_BASE_URL}/auth/login/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          identificador,
+          password,
+          codigo_mfa: codigoMfa,
+          rol: rol || '',
+          token_otp_generado: tokenOtpGenerado || ''
+        })
+      });
+    } catch {
+      throw new Error('No se pudo establecer conexión con el servidor. Verifique su conexión a internet o intente en unos momentos.');
     }
+
+    let data: any = null;
+    try {
+      data = await res.json();
+    } catch {
+      data = null;
+    }
+
+    if (!res.ok) {
+      if (data && data.mensaje) {
+        throw new Error(data.mensaje);
+      }
+      if (res.status === 400) {
+        throw new Error('Los datos ingresados están incompletos. Verifique que el código MFA tenga 6 dígitos.');
+      }
+      if (res.status === 401) {
+        throw new Error('Credenciales incorrectas: Verifique su usuario, contraseña o código MFA.');
+      }
+      if (res.status === 403) {
+        throw new Error('Acceso denegado: El rol seleccionado no corresponde a los permisos de esta cuenta.');
+      }
+      throw new Error('Ocurrió un error al procesar el inicio de sesión. Intente nuevamente.');
+    }
+
     this.setToken(data.token);
     return data;
   }

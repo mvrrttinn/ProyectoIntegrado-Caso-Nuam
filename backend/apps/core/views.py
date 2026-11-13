@@ -42,9 +42,19 @@ class LoginView(APIView):
     def post(self, request):
         serializer = LoginInputSerializer(data=request.data)
         if not serializer.is_valid():
+            detalles = serializer.errors
+            mensaje_error = "Datos de ingreso incompletos o con formato inválido."
+            if 'codigo_mfa' in detalles:
+                mensaje_error = "El código MFA debe contener exactamente 6 dígitos numéricos."
+            elif 'identificador' in detalles:
+                mensaje_error = "Debe ingresar su RUT o correo institucional."
+            elif 'password' in detalles:
+                mensaje_error = "Debe ingresar su contraseña de seguridad."
+
             return Response({
                 'error': 'DATOS_INVALIDOS',
-                'detalles': serializer.errors
+                'mensaje': mensaje_error,
+                'detalles': detalles
             }, status=status.HTTP_400_BAD_REQUEST)
 
         identificador = serializer.validated_data['identificador']

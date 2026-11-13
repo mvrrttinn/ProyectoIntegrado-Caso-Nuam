@@ -24,22 +24,44 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setErrorMsg(null);
 
-    const mfaAEnviar = codigoMfa.trim() || '123456';
+    // Validaciones preventivas con mensajes en español claros
+    const idLimpio = identificador.trim();
+    if (!idLimpio) {
+      setErrorMsg('Por favor ingrese su RUT o correo institucional.');
+      return;
+    }
+
+    if (!password) {
+      setErrorMsg('Por favor ingrese su contraseña de seguridad.');
+      return;
+    }
+
+    const mfaLimpio = codigoMfa.trim();
+    if (!mfaLimpio) {
+      setErrorMsg("Debe ingresar el código MFA de 6 dígitos. (Ingrese '123456' o presione '📲 OTP').");
+      return;
+    }
+
+    if (!/^\d{6}$/.test(mfaLimpio)) {
+      setErrorMsg('El código MFA debe contener exactamente 6 dígitos numéricos (sin letras ni espacios).');
+      return;
+    }
+
+    setLoading(true);
 
     try {
       const response = await api.login(
-        identificador,
+        idLimpio,
         password,
-        mfaAEnviar,
+        mfaLimpio,
         rol,
         tokenMfaGenerado || undefined
       );
       onLoginSuccess(response.usuario);
     } catch (err: any) {
-      setErrorMsg(err.message || 'Error de autenticación');
+      setErrorMsg(err.message || 'Error al autenticar.');
     } finally {
       setLoading(false);
     }
@@ -49,7 +71,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
     setIdentificador(email);
     setPassword('Nuam2026!');
     setRol(rolElegido);
-    setCodigoMfa('');
+    setCodigoMfa('123456');
     setTokenMfaGenerado(null);
     setErrorMsg(null);
   };
@@ -126,7 +148,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                   type="button"
                   className="btn-link text-xs"
                   onClick={generarNuevoMfa}
-                  title="Simular código OTP enviado a dispositivo móvil"
+                  title="Generar código dinámico OTP"
                 >
                   📲 OTP
                 </button>
@@ -145,7 +167,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
 
           {tokenMfaGenerado && (
             <div className="alert-banner alert-success py-2 text-xs">
-              <span>📲 <strong>Token MFA Generado:</strong> Código <code>{tokenMfaGenerado}</code> enviado al dispositivo del usuario (Válido 60s).</span>
+              <span>📲 <strong>Token MFA Generado:</strong> Código <code>{tokenMfaGenerado}</code> emitido (Válido 60s).</span>
             </div>
           )}
 
