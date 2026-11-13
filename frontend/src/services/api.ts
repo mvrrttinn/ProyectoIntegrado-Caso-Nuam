@@ -50,7 +50,13 @@ class ApiClient {
   }
 
   // --- Auth ---
-  async login(identificador: string, password: string, codigoMfa: string, rol?: string): Promise<{ token: string; usuario: UsuarioAutenticado }> {
+  async login(
+    identificador: string,
+    password: string,
+    codigoMfa: string,
+    rol?: string,
+    tokenOtpGenerado?: string
+  ): Promise<{ token: string; usuario: UsuarioAutenticado }> {
     const res = await fetch(`${API_BASE_URL}/auth/login/`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -58,7 +64,8 @@ class ApiClient {
         identificador,
         password,
         codigo_mfa: codigoMfa,
-        rol: rol || ''
+        rol: rol || '',
+        token_otp_generado: tokenOtpGenerado || ''
       })
     });
 

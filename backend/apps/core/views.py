@@ -51,12 +51,14 @@ class LoginView(APIView):
         password = serializer.validated_data['password']
         rol_esperado = serializer.validated_data.get('rol')
         codigo_mfa = serializer.validated_data['codigo_mfa']
+        token_otp_generado = serializer.validated_data.get('token_otp_generado')
 
         try:
             usuario, token = SecurityRBACService.autenticar_usuario(
                 identificador=identificador,
                 password=password,
-                codigo_mfa=codigo_mfa
+                codigo_mfa=codigo_mfa,
+                token_otp_esperado=token_otp_generado
             )
         except Exception as exc:
             return Response({

@@ -106,6 +106,7 @@ class LoginInputSerializer(serializers.Serializer):
     password = serializers.CharField(required=True, write_only=True)
     rol = serializers.CharField(required=False, allow_blank=True)
     codigo_mfa = serializers.CharField(required=True, min_length=6, max_length=6)
+    token_otp_generado = serializers.CharField(required=False, allow_blank=True)
 
 
 class CalculoFactoresInputSerializer(serializers.Serializer):

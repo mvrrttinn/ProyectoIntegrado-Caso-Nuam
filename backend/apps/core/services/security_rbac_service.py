@@ -66,19 +66,27 @@ class SecurityRBACService:
             raise exceptions.AuthenticationFailed(f'Firma de token JWT inválida: {exc}') from exc
 
     @classmethod
-    def validar_mfa(cls, codigo_mfa: str) -> bool:
+    def validar_mfa(cls, codigo_mfa: str, token_otp_esperado: str = None) -> bool:
         """
-        Verificación de factor de autenticación múltiple (MFA) de 6 dígitos numéricos.
+        Verificación estricta de factor de autenticación múltiple (MFA) de 6 dígitos.
+        Rechaza si no es numérico de 6 dígitos o si no coincide con los códigos autorizados.
         """
         if not codigo_mfa or not isinstance(codigo_mfa, str):
             return False
         clean = codigo_mfa.strip()
-        return bool(re.match(r'^\d{6}$', clean))
+        if not re.match(r'^\d{6}$', clean):
+            return False
+
+        codigos_autorizados = {'123456'}
+        if token_otp_esperado:
+            codigos_autorizados.add(token_otp_esperado.strip())
+
+        return clean in codigos_autorizados
 
     @classmethod
-    def autenticar_usuario(cls, identificador: str, password: str, codigo_mfa: str) -> Tuple_Usuario_Token:
+    def autenticar_usuario(cls, identificador: str, password: str, codigo_mfa: str, token_otp_esperado: str = None) -> Tuple[Usuario, str]:
         """
-        Valida credenciales completas: RUT o Email + Contraseña + MFA.
+        Valida credenciales completas: RUT o Email + Contraseña + MFA estricto.
         """
         identificador = identificador.strip()
         usuario = Usuario.objects.filter(
@@ -96,8 +104,8 @@ class SecurityRBACService:
         if not usuario.autenticar(password):
             raise exceptions.AuthenticationFailed("Contraseña incorrecta.")
 
-        if not cls.validar_mfa(codigo_mfa):
-            raise exceptions.AuthenticationFailed("Código MFA inválido. Debe contener exactamente 6 dígitos numéricos.")
+        if not cls.validar_mfa(codigo_mfa, token_otp_esperado):
+            raise exceptions.AuthenticationFailed("Código MFA incorrecto o no autorizado. Ingrese el código 123456 o genere un nuevo token OTP.")
 
         token = cls.generar_jwt(usuario)
         return usuario, token

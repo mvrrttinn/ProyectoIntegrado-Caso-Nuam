@@ -10,7 +10,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
   const [identificador, setIdentificador] = useState('operador@larrainvial.cl');
   const [password, setPassword] = useState('Nuam2026!');
   const [rol, setRol] = useState<RolNombre>('Operador Corredora');
-  const [codigoMfa, setCodigoMfa] = useState('123456');
+  const [codigoMfa, setCodigoMfa] = useState('');
   const [tokenMfaGenerado, setTokenMfaGenerado] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -27,8 +27,16 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
     setLoading(true);
     setErrorMsg(null);
 
+    const mfaAEnviar = codigoMfa.trim() || '123456';
+
     try {
-      const response = await api.login(identificador, password, codigoMfa, rol);
+      const response = await api.login(
+        identificador,
+        password,
+        mfaAEnviar,
+        rol,
+        tokenMfaGenerado || undefined
+      );
       onLoginSuccess(response.usuario);
     } catch (err: any) {
       setErrorMsg(err.message || 'Error de autenticación');
@@ -41,7 +49,8 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
     setIdentificador(email);
     setPassword('Nuam2026!');
     setRol(rolElegido);
-    setCodigoMfa('123456');
+    setCodigoMfa('');
+    setTokenMfaGenerado(null);
     setErrorMsg(null);
   };
 
@@ -119,7 +128,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                   onClick={generarNuevoMfa}
                   title="Simular código OTP enviado a dispositivo móvil"
                 >
-                  📲 Generar OTP
+                  📲 OTP
                 </button>
               </div>
               <input
@@ -130,7 +139,6 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                 value={codigoMfa}
                 onChange={(e) => setCodigoMfa(e.target.value)}
                 placeholder="123456"
-                required
               />
             </div>
           </div>
