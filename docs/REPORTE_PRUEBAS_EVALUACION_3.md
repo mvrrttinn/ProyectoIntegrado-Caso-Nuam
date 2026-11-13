@@ -80,6 +80,10 @@ Comando ejecutado: `python manage.py test apps.core` — **12 de 12 Tests Exitos
 - **Depuración Manual y Limpieza de Lotes de Prueba:** Se incorporaron los endpoints de eliminación atómica (`DELETE /api/v1/certificados/<folio>/`, `DELETE /api/v1/usuarios/<id>/`) y limpieza de lotes de demostración (`POST /api/v1/certificados/limpiar-pruebas/`), restableciendo la base de datos a sus 5 lotes oficiales normativos con registro de auditoría SHA-256.
 - **Feedback Visual Ininterrumpido:** Notificación flotante global con isotipo nuam y spinner circular reactivo ante todas las llamadas asíncronas para eliminar la sensación de bloqueo en la interfaz.
 
+### 4.5. Accesibilidad, Adaptabilidad Móvil y Presentación Institucional
+- **Diseño Responsivo (WCAG 2.1 AA):** Adaptación a smartphones y tablets mediante menú hamburguesa desplegable (*off-canvas drawer*), reorganización fluida de tarjetas KPI (1 y 2 columnas) y deslizamiento táctil horizontal en tablas sin desbordamiento.
+- **Nomenclatura Corporativa:** Limpieza completa de etiquetas académicas `(CU-...)` en la interfaz de usuario, adoptando títulos y roles de grado corporativo financiero internacional para la defensa ante la comisión.
+
 ---
 
 ## 5. Resumen de Calidad y Conclusión Técnica

@@ -126,6 +126,10 @@ Simplemente ingresar a:
 👉 **[https://proyecto-integrado-caso-nuam.vercel.app](https://proyecto-integrado-caso-nuam.vercel.app)**  
 Cualquier acción se sincroniza en tiempo real contra Render y Supabase.
 
+> [!TIP]
+> **Para simular la vista móvil en el computador:**  
+> En Google Chrome o Microsoft Edge presiona **F12** y luego **Ctrl + Shift + M** (o el ícono de celular/tablet en la esquina superior izquierda de DevTools). Podrás probar el menú hamburguesa (☰), las tarjetas KPI apiladas y el deslizamiento táctil horizontal sin necesidad de abrir el teléfono.
+
 #### Opción B: Ejecutar Frontend Local con Backend Nube
 Si va a tocar código de React:
 ```powershell
