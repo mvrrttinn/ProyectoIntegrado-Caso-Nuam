@@ -22,6 +22,9 @@ __pycache__/
 *.so
 db.sqlite3
 db.sqlite3-journal
+test_db.sqlite3
+backend/test_db.sqlite3
+backend/data/
 media/
 static/
 .pytest_cache/
