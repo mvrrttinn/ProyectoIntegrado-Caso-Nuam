@@ -7,9 +7,15 @@ interface LoginViewProps {
 }
 
 export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
-  const [identificador, setIdentificador] = useState('operador@larrainvial.cl');
-  const [password, setPassword] = useState('Nuam2026!');
-  const [rol, setRol] = useState<RolNombre>('Operador Corredora');
+  // Cargar usuario y rol recordados desde almacenamiento local
+  const usuarioRecordado = localStorage.getItem('nuam_ultimo_usuario') || '';
+  const rolRecordado = (localStorage.getItem('nuam_ultimo_rol') as RolNombre) || 'Operador Corredora';
+  const recordarInicial = localStorage.getItem('nuam_recordar_usuario') !== 'false';
+
+  const [identificador, setIdentificador] = useState(usuarioRecordado);
+  const [password, setPassword] = useState('');
+  const [rol, setRol] = useState<RolNombre>(rolRecordado);
+  const [recordarUsuario, setRecordarUsuario] = useState(recordarInicial);
   const [codigoMfa, setCodigoMfa] = useState('');
   const [tokenMfaGenerado, setTokenMfaGenerado] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -59,21 +65,24 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
         rol,
         tokenMfaGenerado || undefined
       );
+
+      // Gestionar preferencia de recordar usuario
+      if (recordarUsuario) {
+        localStorage.setItem('nuam_recordar_usuario', 'true');
+        localStorage.setItem('nuam_ultimo_usuario', idLimpio);
+        localStorage.setItem('nuam_ultimo_rol', rol);
+      } else {
+        localStorage.setItem('nuam_recordar_usuario', 'false');
+        localStorage.removeItem('nuam_ultimo_usuario');
+        localStorage.removeItem('nuam_ultimo_rol');
+      }
+
       onLoginSuccess(response.usuario);
     } catch (err: any) {
       setErrorMsg(err.message || 'Error al autenticar.');
     } finally {
       setLoading(false);
     }
-  };
-
-  const setPerfilRapido = (email: string, rolElegido: RolNombre) => {
-    setIdentificador(email);
-    setPassword('Nuam2026!');
-    setRol(rolElegido);
-    setCodigoMfa('123456');
-    setTokenMfaGenerado(null);
-    setErrorMsg(null);
   };
 
   return (
@@ -144,14 +153,28 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
             <div className="form-group w-mfa">
               <div className="flex justify-between items-center">
                 <label htmlFor="input-mfa">Código MFA</label>
-                <button
-                  type="button"
-                  className="btn-link text-xs"
-                  onClick={generarNuevoMfa}
-                  title="Generar código dinámico OTP"
-                >
-                  📲 OTP
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    className="btn-link text-xs"
+                    onClick={() => {
+                      setCodigoMfa('123456');
+                      setTokenMfaGenerado(null);
+                      setErrorMsg(null);
+                    }}
+                    title="Cargar código de desarrollo por defecto"
+                  >
+                    🔑 123456
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-link text-xs"
+                    onClick={generarNuevoMfa}
+                    title="Generar código dinámico OTP"
+                  >
+                    📲 OTP
+                  </button>
+                </div>
               </div>
               <input
                 id="input-mfa"
@@ -163,6 +186,18 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                 placeholder="123456"
               />
             </div>
+          </div>
+
+          <div className="form-group mb-4">
+            <label className="checkbox-label flex items-center gap-2 cursor-pointer text-sm text-muted select-none">
+              <input
+                type="checkbox"
+                checked={recordarUsuario}
+                onChange={(e) => setRecordarUsuario(e.target.checked)}
+                className="w-4 h-4 cursor-pointer"
+              />
+              <span>Recordar mi usuario y rol en este equipo</span>
+            </label>
           </div>
 
           {tokenMfaGenerado && (
@@ -179,34 +214,6 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
             {loading ? 'Verificando firma digital...' : 'Autenticar e Ingresar'}
           </button>
         </form>
-
-        {/* Perfiles de Acceso Rápido para Demostración / Rúbrica */}
-        <div className="quick-access-section">
-          <span className="quick-access-title">ACCESOS RÁPIDOS DE PRUEBA:</span>
-          <div className="quick-buttons-row">
-            <button
-              type="button"
-              className="btn-quick"
-              onClick={() => setPerfilRapido('operador@larrainvial.cl', 'Operador Corredora')}
-            >
-              🧑‍💼 Operador (LarrainVial)
-            </button>
-            <button
-              type="button"
-              className="btn-quick"
-              onClick={() => setPerfilRapido('auditor@nuam.com', 'Auditor nuam')}
-            >
-              🔍 Auditor nuam
-            </button>
-            <button
-              type="button"
-              className="btn-quick"
-              onClick={() => setPerfilRapido('admin@nuam.com', 'Administrador Plataforma')}
-            >
-              🛡️ Admin Global
-            </button>
-          </div>
-        </div>
 
         {/* Sello de Conformidad ISO 27001 / CMF */}
         <div className="login-footer-security">
