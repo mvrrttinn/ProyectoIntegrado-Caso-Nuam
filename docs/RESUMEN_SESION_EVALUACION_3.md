@@ -98,9 +98,10 @@ Para evitar la saturación de certificados y usuarios generados durante las prue
 
 ### 3.8. Notificación Flotante de Carga Global con Branding nuam y Spinner Circular
 Para evitar la sensación de congelamiento o incertidumbre en la pantalla durante operaciones asíncronas (eliminación de lotes, ingesta masiva CSV, validaciones y guardado):
-* **Componente `FloatingLoader`:** Se desarrolló un componente visual flotante tipo toast con efecto glassmorphism (`backdrop-filter: blur(14px)`) ubicado en la esquina inferior derecha.
+* **Componente `FloatingLoader`:** Se desarrolló un componente visual flotante tipo toast con efecto glassmorphism (`backdrop-filter: blur(16px)`) ubicado prominentemente en la **esquina superior derecha** con animación de descenso suave (`toastSlideDown`).
 * **Branding e Iconografía Oficial:** Presenta el imagotipo oficial de **nuam EXCHANGE** enmarcado por un anillo de carga circular giratorio (`loader-spinner-ring`) en degradado naranja-rojo corporativo (`#f97316` / `#ef4444`).
 * **Intercepción Reactiva Global:** Integrado a través del cliente API (`fetchWithLoader`), mostrando mensajes contextuales claros en español según la acción en curso (*"Eliminando lote fiscal...", "Ingestando nómina masiva...", "Guardando cambios de perfil...", etc.*).
+* **Iconografía SVG y Alineación:** Reemplazo de emojis genéricos por botones vectoriales SVG (`.btn-icon-delete`) con alineación en línea fija (`.table-actions-cell`), impidiendo quiebres visuales de línea en tablas.
 
 ---
 
