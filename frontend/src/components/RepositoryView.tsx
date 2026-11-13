@@ -30,7 +30,7 @@ export const RepositoryView: React.FC<RepositoryViewProps> = ({ usuario }) => {
   const [procesandoEliminar, setProcesandoEliminar] = useState(false);
 
   const esAuditor = usuario.rol === 'Auditor nuam' || usuario.rol === 'Administrador Plataforma';
-  const esAdmin = usuario.rol === 'Administrador Plataforma';
+  const puedeEliminar = usuario.rol === 'Administrador Plataforma' || usuario.rol === 'Auditor nuam';
 
   const cargarCertificados = async () => {
     setLoading(true);
@@ -181,7 +181,7 @@ export const RepositoryView: React.FC<RepositoryViewProps> = ({ usuario }) => {
           </p>
         </div>
         <div className="view-actions">
-          {esAdmin && (
+          {puedeEliminar && (
             <button
               type="button"
               className="btn-danger mr-2"
@@ -323,7 +323,7 @@ export const RepositoryView: React.FC<RepositoryViewProps> = ({ usuario }) => {
                               {esAuditor ? 'Aprobar y Cerrar' : '🔒 Requiere Auditor'}
                             </button>
                           )}
-                          {esAdmin && (
+                          {puedeEliminar && (
                             <button
                               type="button"
                               className="btn-icon-delete"

@@ -8,6 +8,16 @@ interface DashboardViewProps {
   onNavigateToRepository: () => void;
 }
 
+const TrashIcon = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M3 6h18" />
+    <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+    <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+    <line x1="10" y1="11" x2="10" y2="17" />
+    <line x1="14" y1="11" x2="14" y2="17" />
+  </svg>
+);
+
 export const DashboardView: React.FC<DashboardViewProps> = ({
   usuario,
   onNavigateToUpload,
@@ -17,6 +27,33 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const [lotes, setLotes] = useState<CertificadoDividendo[]>([]);
   const [loading, setLoading] = useState(true);
   const [loteSeleccionado, setLoteSeleccionado] = useState<CertificadoDividendo | null>(null);
+  const [folioAEliminar, setFolioAEliminar] = useState<string | null>(null);
+  const [procesandoEliminar, setProcesandoEliminar] = useState(false);
+  const [mensajeNotificacion, setMensajeNotificacion] = useState<{ tipo: 'success' | 'error'; texto: string } | null>(null);
+
+  const puedeEliminar = usuario?.rol === 'Administrador Plataforma' || usuario?.rol === 'Auditor nuam';
+
+  const handleConfirmarEliminar = async () => {
+    if (!folioAEliminar) return;
+    setProcesandoEliminar(true);
+    setMensajeNotificacion(null);
+    try {
+      const resp = await api.deleteCertificado(folioAEliminar);
+      setMensajeNotificacion({
+        tipo: 'success',
+        texto: `✅ ${resp.mensaje || `Certificado '${folioAEliminar}' eliminado exitosamente.`}`
+      });
+      setFolioAEliminar(null);
+      await cargarDatos();
+    } catch (err: any) {
+      setMensajeNotificacion({
+        tipo: 'error',
+        texto: `🛑 ${err.message || 'Error al eliminar el certificado.'}`
+      });
+    } finally {
+      setProcesandoEliminar(false);
+    }
+  };
 
   const cargarDatos = async () => {
     setLoading(true);
@@ -114,6 +151,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
       {/* Grilla Últimos Lotes Procesados */}
       <div className="content-card mt-6">
+        {mensajeNotificacion && (
+          <div className={`alert-banner ${mensajeNotificacion.tipo === 'success' ? 'alert-success' : 'alert-error'} mb-4`}>
+            <span className="alert-icon">{mensajeNotificacion.tipo === 'success' ? '✅' : '🛑'}</span>
+            <span className="alert-text">{mensajeNotificacion.texto}</span>
+          </div>
+        )}
+
         <div className="card-header-flex">
           <div>
             <h3 className="card-title">Últimos Lotes Oficiales Procesados (2026)</h3>
@@ -176,13 +220,26 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                         </span>
                       </td>
                       <td>
-                        <button
-                          type="button"
-                          className="btn-action-sm"
-                          onClick={() => setLoteSeleccionado(lote)}
-                        >
-                          Inspeccionar
-                        </button>
+                        <div className="table-actions-cell">
+                          <button
+                            type="button"
+                            className="btn-action-sm"
+                            onClick={() => setLoteSeleccionado(lote)}
+                          >
+                            Inspeccionar
+                          </button>
+                          {puedeEliminar && (
+                            <button
+                              type="button"
+                              className="btn-icon-delete"
+                              onClick={() => setFolioAEliminar(lote.folio_certificado)}
+                              title={`Eliminar certificado ${lote.folio_certificado} y sus factores`}
+                              aria-label={`Eliminar certificado ${lote.folio_certificado}`}
+                            >
+                              <TrashIcon />
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );
@@ -235,6 +292,44 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <div className="modal-footer">
               <button type="button" className="btn-secondary" onClick={() => setLoteSeleccionado(null)}>
                 Cerrar Inspector
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Confirmación Eliminación Individual en Dashboard */}
+      {folioAEliminar && (
+        <div className="modal-backdrop">
+          <div className="modal-dialog">
+            <div className="modal-header">
+              <h3 className="modal-title">Confirmar Eliminación de Lote Fiscal</h3>
+              <button type="button" className="btn-close" onClick={() => setFolioAEliminar(null)} disabled={procesandoEliminar}>✕</button>
+            </div>
+            <div className="modal-body">
+              <p className="mb-3">
+                ¿Está seguro de que desea eliminar permanentemente el certificado con folio <strong>{folioAEliminar}</strong>?
+              </p>
+              <div className="alert-box-notice">
+                ⚠️ Esta acción eliminará el certificado y todos sus factores tributarios de <code>Supabase PostgreSQL</code>. La operación quedará firmada y auditada en la bitácora criptográfica SHA-256.
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => setFolioAEliminar(null)}
+                disabled={procesandoEliminar}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="btn-danger"
+                onClick={handleConfirmarEliminar}
+                disabled={procesandoEliminar}
+              >
+                {procesandoEliminar ? 'Eliminando...' : 'Sí, Eliminar de Supabase'}
               </button>
             </div>
           </div>

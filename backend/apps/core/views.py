@@ -288,10 +288,10 @@ class CertificadoDetailDeleteView(APIView):
     """
     DELETE /api/v1/certificados/<str:folio>/
     Eliminación individual de certificado y sus factores asociados.
-    Exclusivo para el rol 'Administrador Plataforma'.
+    Autorizado para 'Administrador Plataforma' y 'Auditor nuam'.
     """
     authentication_classes = [NuamJWTAuthentication]
-    permission_classes = [IsAuthenticated, rol_requerido('Administrador Plataforma')]
+    permission_classes = [IsAuthenticated, rol_requerido('Auditor nuam')]
 
     def delete(self, request, folio):
         cert = CertificadoDividendo.objects.filter(folio_certificado=folio).first()
@@ -329,10 +329,10 @@ class LimpiarCertificadosPruebaView(APIView):
     POST /api/v1/certificados/limpiar-pruebas/
     Elimina todos los certificados y lotes de prueba cargados, preservando
     únicamente los 5 lotes oficiales normativos de demostración CMF.
-    Exclusivo para el rol 'Administrador Plataforma'.
+    Autorizado para 'Administrador Plataforma' y 'Auditor nuam'.
     """
     authentication_classes = [NuamJWTAuthentication]
-    permission_classes = [IsAuthenticated, rol_requerido('Administrador Plataforma')]
+    permission_classes = [IsAuthenticated, rol_requerido('Auditor nuam')]
 
     def post(self, request):
         folios_oficiales_base = ['LT-2026-0037', 'LT-2026-0038', 'LT-2026-0039', 'LT-2026-0040', 'LT-2026-0041']
