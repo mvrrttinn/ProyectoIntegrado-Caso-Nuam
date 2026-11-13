@@ -10,6 +10,16 @@ interface PasswordPolicyStatus {
   esValida: boolean;
 }
 
+const TrashIcon = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M3 6h18" />
+    <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+    <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+    <line x1="10" y1="11" x2="10" y2="17" />
+    <line x1="14" y1="11" x2="14" y2="17" />
+  </svg>
+);
+
 const evaluarPassword = (pass: string): PasswordPolicyStatus => {
   const minLen = pass.length >= 8;
   const hasMayus = /[A-Z]/.test(pass);
@@ -393,7 +403,7 @@ export const RbacAdminView: React.FC = () => {
                       </span>
                     </td>
                     <td>
-                      <div className="flex items-center gap-2">
+                      <div className="table-actions-cell">
                         <button
                           type="button"
                           className="btn-action-sm"
@@ -405,11 +415,12 @@ export const RbacAdminView: React.FC = () => {
                         {u.rut !== '11.222.333-4' && u.email !== 'admin@nuam.com' && (
                           <button
                             type="button"
-                            className="btn-action-sm btn-delete"
+                            className="btn-icon-delete"
                             onClick={() => setUsuarioAEliminar(u)}
                             title={`Eliminar usuario ${u.nombre || u.email}`}
+                            aria-label={`Eliminar usuario ${u.nombre || u.email}`}
                           >
-                            🗑️
+                            <TrashIcon />
                           </button>
                         )}
                       </div>
