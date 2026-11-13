@@ -149,6 +149,31 @@ class ApiClient {
     return data;
   }
 
+  // --- Eliminación y Limpieza de Certificados (Admin) ---
+  async deleteCertificado(folio: string): Promise<{ status: string; mensaje: string }> {
+    const res = await fetch(`${API_BASE_URL}/certificados/${encodeURIComponent(folio)}/`, {
+      method: 'DELETE',
+      headers: this.getHeaders()
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.mensaje || data.error || 'Error al eliminar el certificado.');
+    }
+    return data;
+  }
+
+  async limpiarLotesPrueba(): Promise<{ status: string; mensaje: string; registros_eliminados: number }> {
+    const res = await fetch(`${API_BASE_URL}/certificados/limpiar-pruebas/`, {
+      method: 'POST',
+      headers: this.getHeaders()
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.mensaje || data.error || 'Error al limpiar los lotes de prueba.');
+    }
+    return data;
+  }
+
   // --- Ingesta Masiva CSV (CU-01) ---
   async uploadCsv(archivo: File | string): Promise<{ status: number; data: UploadResponseSuccess | UploadResponseError }> {
     let res: Response;
@@ -236,6 +261,18 @@ class ApiClient {
       throw new Error(err.mensaje || JSON.stringify(err) || 'Error al crear usuario.');
     }
     return res.json();
+  }
+
+  async deleteUsuario(idUsuario: number): Promise<{ status: string; mensaje: string }> {
+    const res = await fetch(`${API_BASE_URL}/usuarios/${idUsuario}/`, {
+      method: 'DELETE',
+      headers: this.getHeaders()
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.mensaje || data.error || 'Error al eliminar usuario.');
+    }
+    return data;
   }
 }
 

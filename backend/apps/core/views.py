@@ -284,6 +284,77 @@ class CerrarLoteFiscalView(APIView):
         }, status=status.HTTP_200_OK)
 
 
+class CertificadoDetailDeleteView(APIView):
+    """
+    DELETE /api/v1/certificados/<str:folio>/
+    Eliminación individual de certificado y sus factores asociados.
+    Exclusivo para el rol 'Administrador Plataforma'.
+    """
+    authentication_classes = [NuamJWTAuthentication]
+    permission_classes = [IsAuthenticated, rol_requerido('Administrador Plataforma')]
+
+    def delete(self, request, folio):
+        cert = CertificadoDividendo.objects.filter(folio_certificado=folio).first()
+        if not cert:
+            return Response({
+                'error': 'NOT_FOUND',
+                'mensaje': f"El certificado con folio '{folio}' no existe en el repositorio."
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        emisor_str = str(cert.rut_emisor)
+        monto_str = str(cert.monto_total_bruto)
+        estado_prev = cert.estado_proceso
+
+        # Auditoría criptográfica de eliminación
+        AuditAlertsService.registrar_evento(
+            usuario=request.user,
+            accion="ELIMINACION_CERTIFICADO_LOTE",
+            detalles_extra={
+                'folio_eliminado': folio,
+                'emisor': emisor_str,
+                'monto_total_bruto': monto_str,
+                'estado_previo': estado_prev
+            }
+        )
+
+        cert.delete()
+        return Response({
+            'status': 'success',
+            'mensaje': f"Certificado '{folio}' y sus factores tributarios asociados han sido eliminados de Supabase."
+        }, status=status.HTTP_200_OK)
+
+
+class LimpiarCertificadosPruebaView(APIView):
+    """
+    POST /api/v1/certificados/limpiar-pruebas/
+    Elimina todos los certificados y lotes de prueba cargados, preservando
+    únicamente los 5 lotes oficiales normativos de demostración CMF.
+    Exclusivo para el rol 'Administrador Plataforma'.
+    """
+    authentication_classes = [NuamJWTAuthentication]
+    permission_classes = [IsAuthenticated, rol_requerido('Administrador Plataforma')]
+
+    def post(self, request):
+        folios_oficiales_base = ['LT-2026-0037', 'LT-2026-0038', 'LT-2026-0039', 'LT-2026-0040', 'LT-2026-0041']
+        
+        # Eliminar lotes que no correspondan a los 5 oficiales base
+        lotes_a_borrar = CertificadoDividendo.objects.exclude(folio_certificado__in=folios_oficiales_base)
+        cantidad_eliminados = lotes_a_borrar.count()
+        lotes_a_borrar.delete()
+
+        AuditAlertsService.registrar_evento(
+            usuario=request.user,
+            accion="LIMPIEZA_LOTES_PRUEBA_SISTEMA",
+            detalles_extra={'registros_eliminados': cantidad_eliminados}
+        )
+
+        return Response({
+            'status': 'success',
+            'mensaje': f"Se han eliminado {cantidad_eliminados} lotes de prueba. El repositorio ha sido restablecido a los 5 lotes oficiales base.",
+            'registros_eliminados': cantidad_eliminados
+        }, status=status.HTTP_200_OK)
+
+
 class AuditoriaListView(APIView):
     """
     GET /api/v1/auditoria/
@@ -439,6 +510,47 @@ class UsuarioDetailView(APIView):
 
         serializer = UsuarioSerializer(usuario)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def delete(self, request, pk):
+        usuario = Usuario.objects.filter(pk=pk).first()
+        if not usuario:
+            return Response({'error': 'Usuario no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+
+        if usuario.rut == '11.222.333-4' or usuario.email.lower() == 'admin@nuam.com':
+            return Response({
+                'error': 'OPERACION_DENEGADA',
+                'mensaje': 'No se puede eliminar la cuenta del Administrador Institucional raíz.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        if usuario.id_usuario == request.user.id_usuario:
+            return Response({
+                'error': 'OPERACION_DENEGADA',
+                'mensaje': 'No puedes eliminar tu propia cuenta de usuario en sesión activa.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        AuditAlertsService.registrar_evento(
+            usuario=request.user,
+            accion="ELIMINACION_USUARIO_RBAC",
+            detalles_extra={
+                'usuario_eliminado_rut': usuario.rut,
+                'usuario_eliminado_email': usuario.email,
+                'rol': usuario.id_rol.nombre_rol
+            }
+        )
+
+        try:
+            usuario.delete()
+        except Exception:
+            usuario.inactivar_cuenta()
+            return Response({
+                'status': 'success',
+                'mensaje': f"Usuario '{usuario.email}' inactivado permanentemente debido a dependencias históricas de auditoría."
+            }, status=status.HTTP_200_OK)
+
+        return Response({
+            'status': 'success',
+            'mensaje': f"Usuario '{usuario.email}' eliminado exitosamente de la base de datos."
+        }, status=status.HTTP_200_OK)
 
 
 class RolesListView(APIView):

@@ -84,6 +84,18 @@ A solicitud de la comisión docente, se implementó una política estricta de ro
 * **Frontend:** Se integró un componente visual interactivo `PasswordPolicyChecklist` en los modales de **Registrar Usuario** y **Editar Usuario**, que marca con `✅` en verde cada requisito cumplido en tiempo real mientras el usuario escribe.
 * **Backend:** Método `Usuario.validar_password_reforzada()` ejecutado en `POST /api/v1/usuarios/` y `PATCH /api/v1/usuarios/<id>/`, devolviendo `HTTP 400 Bad Request` si la contraseña no cumple con la política.
 
+### 3.7. Gestión y Depuración de Datos de Prueba (Eliminación de Entradas Manuales)
+Para evitar la saturación de certificados y usuarios generados durante las pruebas y demostraciones en clases:
+* **Eliminación Individual de Certificados/Lotes (`DELETE /api/v1/certificados/<folio>/`):**
+  * En el **Repositorio Multianual**, el Administrador dispone de un botón **🗑️** por cada fila para eliminar un lote específico y sus factores tributarios asociados en cascada.
+  * Incluye ventana modal de confirmación y registro criptográfico de la acción en `TB_AUDIT_LOGS`.
+* **Limpieza Masiva de Lotes de Prueba (`POST /api/v1/certificados/limpiar-pruebas/`):**
+  * Botón **"🧹 Limpiar Lotes de Prueba"** en la cabecera del Repositorio.
+  * Purga automáticamente todos los certificados cargados manualmente durante las pruebas y restablece el repositorio dejando limpios los **5 lotes oficiales base normativos de la CMF**.
+* **Eliminación de Usuarios de Prueba (`DELETE /api/v1/usuarios/<id>/`):**
+  * En **Gobernanza RBAC**, el Administrador puede eliminar usuarios creados de prueba con botón **🗑️** y confirmación modal (protegiendo siempre la cuenta del Administrador raíz).
+* **Protección contra Cierre Accidental:** Se eliminó el cierre involuntario de ventanas flotantes por clic en el fondo oscuro en todos los modales de gestión.
+
 ---
 
 ## 💻 4. Guía para Continuar Trabajando desde Casa

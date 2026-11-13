@@ -6,7 +6,8 @@ Versión: v1
 from django.urls import path
 from apps.core.views import (
     LoginView, UploadDividendosView, CalcularFactoresView,
-    CertificadosListView, CerrarLoteFiscalView, AuditoriaListView,
+    CertificadosListView, CerrarLoteFiscalView, CertificadoDetailDeleteView,
+    LimpiarCertificadosPruebaView, AuditoriaListView,
     DashboardStatsView, UsuariosListCreateView, UsuarioDetailView, RolesListView
 )
 
@@ -22,6 +23,8 @@ urlpatterns = [
 
     # CU-04 Consulta Histórica Multianual y Repositorio
     path('certificados/', CertificadosListView.as_view(), name='api-certificados-list'),
+    path('certificados/limpiar-pruebas/', LimpiarCertificadosPruebaView.as_view(), name='api-certificados-limpiar-pruebas'),
+    path('certificados/<str:folio>/', CertificadoDetailDeleteView.as_view(), name='api-certificado-delete'),
 
     # CU-05 Aprobación y Cierre de Lote Fiscal (Auditor nuam)
     path('certificados/<str:folio>/cerrar/', CerrarLoteFiscalView.as_view(), name='api-certificados-cerrar'),

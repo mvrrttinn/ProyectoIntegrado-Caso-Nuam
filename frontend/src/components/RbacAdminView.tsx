@@ -84,6 +84,9 @@ export const RbacAdminView: React.FC = () => {
   const [editEstado, setEditEstado] = useState('ACTIVO');
   const [editPassword, setEditPassword] = useState('');
 
+  // Modal Confirmar Eliminación Usuario
+  const [usuarioAEliminar, setUsuarioAEliminar] = useState<any | null>(null);
+
   const [guardando, setGuardando] = useState(false);
 
   const cargarDatos = async () => {
@@ -222,6 +225,28 @@ export const RbacAdminView: React.FC = () => {
       setMensaje({
         tipo: 'error',
         texto: err.message || 'Error al crear el nuevo usuario.'
+      });
+    } finally {
+      setGuardando(false);
+    }
+  };
+
+  const handleConfirmarEliminarUsuario = async () => {
+    if (!usuarioAEliminar) return;
+    setGuardando(true);
+    setMensaje(null);
+    try {
+      const resp = await api.deleteUsuario(usuarioAEliminar.id_usuario);
+      setMensaje({
+        tipo: 'success',
+        texto: `✅ ${resp.mensaje || 'Usuario eliminado correctamente de la base de datos.'}`
+      });
+      setUsuarioAEliminar(null);
+      cargarDatos();
+    } catch (err: any) {
+      setMensaje({
+        tipo: 'error',
+        texto: err.message || 'Error al eliminar usuario.'
       });
     } finally {
       setGuardando(false);
@@ -368,14 +393,26 @@ export const RbacAdminView: React.FC = () => {
                       </span>
                     </td>
                     <td>
-                      <button
-                        type="button"
-                        className="btn-action-sm"
-                        onClick={() => abrirModalEditar(u)}
-                        title="Editar nombre, correo, corredora y contraseña"
-                      >
-                        ✏️ Editar
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          className="btn-action-sm"
+                          onClick={() => abrirModalEditar(u)}
+                          title="Editar nombre, correo, corredora y contraseña"
+                        >
+                          ✏️ Editar
+                        </button>
+                        {u.rut !== '11.222.333-4' && u.email !== 'admin@nuam.com' && (
+                          <button
+                            type="button"
+                            className="btn-action-sm btn-delete"
+                            onClick={() => setUsuarioAEliminar(u)}
+                            title={`Eliminar usuario ${u.nombre || u.email}`}
+                          >
+                            🗑️
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -616,6 +653,34 @@ export const RbacAdminView: React.FC = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Confirmación Eliminación Usuario */}
+      {usuarioAEliminar && (
+        <div className="modal-backdrop">
+          <div className="modal-dialog">
+            <div className="modal-header">
+              <h3 className="modal-title">Confirmar Eliminación de Usuario</h3>
+              <button type="button" className="btn-close" onClick={() => setUsuarioAEliminar(null)} disabled={guardando}>✕</button>
+            </div>
+            <div className="modal-body">
+              <p className="mb-3">
+                ¿Está seguro de que desea eliminar la cuenta institucional de <strong>{usuarioAEliminar.nombre}</strong> (<code>{usuarioAEliminar.email}</code>)?
+              </p>
+              <div className="alert-box-notice">
+                ⚠️ El usuario perderá el acceso a la plataforma. Esta operación quedará registrada en <code>TB_AUDIT_LOGS</code> con firma criptográfica SHA-256.
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button type="button" className="btn-secondary mr-2" onClick={() => setUsuarioAEliminar(null)} disabled={guardando}>
+                Cancelar
+              </button>
+              <button type="button" className="btn-danger" onClick={handleConfirmarEliminarUsuario} disabled={guardando}>
+                {guardando ? 'Eliminando...' : 'Sí, Eliminar Usuario'}
+              </button>
+            </div>
           </div>
         </div>
       )}

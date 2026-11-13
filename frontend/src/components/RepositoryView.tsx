@@ -14,7 +14,13 @@ export const RepositoryView: React.FC<RepositoryViewProps> = ({ usuario }) => {
   const [filtroEstado, setFiltroEstado] = useState<string>('todos');
   const [mensajeAccion, setMensajeAccion] = useState<{ tipo: 'success' | 'error'; texto: string } | null>(null);
 
+  // Estados de eliminación y limpieza
+  const [folioAEliminar, setFolioAEliminar] = useState<string | null>(null);
+  const [mostrarModalLimpieza, setMostrarModalLimpieza] = useState(false);
+  const [procesandoEliminar, setProcesandoEliminar] = useState(false);
+
   const esAuditor = usuario.rol === 'Auditor nuam' || usuario.rol === 'Administrador Plataforma';
+  const esAdmin = usuario.rol === 'Administrador Plataforma';
 
   const cargarCertificados = async () => {
     setLoading(true);
@@ -63,6 +69,47 @@ export const RepositoryView: React.FC<RepositoryViewProps> = ({ usuario }) => {
         tipo: 'error',
         texto: err.message || 'Error al ejecutar cierre de lote fiscal.'
       });
+    }
+  };
+
+  const confirmarEliminarCertificado = async () => {
+    if (!folioAEliminar) return;
+    setProcesandoEliminar(true);
+    try {
+      const resp = await api.deleteCertificado(folioAEliminar);
+      setMensajeAccion({
+        tipo: 'success',
+        texto: `✅ ${resp.mensaje || `Certificado ${folioAEliminar} eliminado correctamente.`}`
+      });
+      setFolioAEliminar(null);
+      cargarCertificados();
+    } catch (err: any) {
+      setMensajeAccion({
+        tipo: 'error',
+        texto: err.message || 'Error al eliminar el certificado.'
+      });
+    } finally {
+      setProcesandoEliminar(false);
+    }
+  };
+
+  const confirmarLimpiarLotesPrueba = async () => {
+    setProcesandoEliminar(true);
+    try {
+      const resp = await api.limpiarLotesPrueba();
+      setMensajeAccion({
+        tipo: 'success',
+        texto: `✅ ${resp.mensaje || 'Se han purgado los lotes de prueba satisfactoriamente.'}`
+      });
+      setMostrarModalLimpieza(false);
+      cargarCertificados();
+    } catch (err: any) {
+      setMensajeAccion({
+        tipo: 'error',
+        texto: err.message || 'Error al limpiar los lotes de prueba.'
+      });
+    } finally {
+      setProcesandoEliminar(false);
     }
   };
 
@@ -124,6 +171,16 @@ export const RepositoryView: React.FC<RepositoryViewProps> = ({ usuario }) => {
           </p>
         </div>
         <div className="view-actions">
+          {esAdmin && (
+            <button
+              type="button"
+              className="btn-danger mr-2"
+              onClick={() => setMostrarModalLimpieza(true)}
+              title="Purgar lotes de prueba y restablecer a los 5 lotes oficiales base"
+            >
+              🧹 Limpiar Lotes de Prueba
+            </button>
+          )}
           <button type="button" className="btn-secondary" onClick={exportarCsvCmf}>
             📥 Exportar Formato CMF / CSV
           </button>
@@ -241,20 +298,32 @@ export const RepositoryView: React.FC<RepositoryViewProps> = ({ usuario }) => {
                         </span>
                       </td>
                       <td>
-                        {esCerrado ? (
-                          <span className="badge-closed">🔒 Lote Cerrado</span>
-                        ) : esObservado ? (
-                          <span className="badge-warning">⚠️ Discrepancia</span>
-                        ) : (
-                          <button
-                            type="button"
-                            className={`btn-action-close ${!esAuditor ? 'btn-restricted' : ''}`}
-                            onClick={() => handleCerrarLote(cert.folio_certificado)}
-                            title={esAuditor ? "Aprobar y Cerrar Lote Fiscal (CU-05)" : "Acción reservada exclusivamente para Auditor nuam"}
-                          >
-                            {esAuditor ? 'Aprobar y Cerrar' : '🔒 Requiere Auditor'}
-                          </button>
-                        )}
+                        <div className="flex items-center gap-2">
+                          {esCerrado ? (
+                            <span className="badge-closed">🔒 Lote Cerrado</span>
+                          ) : esObservado ? (
+                            <span className="badge-warning">⚠️ Discrepancia</span>
+                          ) : (
+                            <button
+                              type="button"
+                              className={`btn-action-close ${!esAuditor ? 'btn-restricted' : ''}`}
+                              onClick={() => handleCerrarLote(cert.folio_certificado)}
+                              title={esAuditor ? "Aprobar y Cerrar Lote Fiscal (CU-05)" : "Acción reservada exclusivamente para Auditor nuam"}
+                            >
+                              {esAuditor ? 'Aprobar y Cerrar' : '🔒 Requiere Auditor'}
+                            </button>
+                          )}
+                          {esAdmin && (
+                            <button
+                              type="button"
+                              className="btn-action-sm btn-delete"
+                              onClick={() => setFolioAEliminar(cert.folio_certificado)}
+                              title={`Eliminar certificado ${cert.folio_certificado} y sus factores`}
+                            >
+                              🗑️
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );
@@ -264,6 +333,62 @@ export const RepositoryView: React.FC<RepositoryViewProps> = ({ usuario }) => {
           </div>
         )}
       </div>
+
+      {/* Modal Confirmación Eliminación Individual */}
+      {folioAEliminar && (
+        <div className="modal-backdrop">
+          <div className="modal-dialog">
+            <div className="modal-header">
+              <h3 className="modal-title">Confirmar Eliminación de Lote Fiscal</h3>
+              <button type="button" className="btn-close" onClick={() => setFolioAEliminar(null)} disabled={procesandoEliminar}>✕</button>
+            </div>
+            <div className="modal-body">
+              <p className="mb-3">
+                ¿Está seguro de que desea eliminar permanentemente el certificado con folio <strong>{folioAEliminar}</strong>?
+              </p>
+              <div className="alert-box-notice">
+                ⚠️ Esta acción eliminará el certificado y todos sus factores tributarios de <code>Supabase PostgreSQL</code>. La operación quedará firmada y auditada en la bitácora criptográfica SHA-256.
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button type="button" className="btn-secondary mr-2" onClick={() => setFolioAEliminar(null)} disabled={procesandoEliminar}>
+                Cancelar
+              </button>
+              <button type="button" className="btn-danger" onClick={confirmarEliminarCertificado} disabled={procesandoEliminar}>
+                {procesandoEliminar ? 'Eliminando...' : 'Sí, Eliminar Registro'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Confirmación Limpieza Masiva de Lotes de Prueba */}
+      {mostrarModalLimpieza && (
+        <div className="modal-backdrop">
+          <div className="modal-dialog">
+            <div className="modal-header">
+              <h3 className="modal-title">Limpieza de Lotes de Prueba</h3>
+              <button type="button" className="btn-close" onClick={() => setMostrarModalLimpieza(false)} disabled={procesandoEliminar}>✕</button>
+            </div>
+            <div className="modal-body">
+              <p className="mb-3">
+                Esta acción eliminará todos los certificados y lotes que hayan sido cargados de forma manual o durante pruebas, <strong>reestableciendo el repositorio a los 5 lotes oficiales normativos de demostración CMF</strong>.
+              </p>
+              <div className="alert-box-notice">
+                🧹 Se conservarán intactos los lotes base (Banco de Chile, Falabella, CMPC, Entel y Colbún). Todas las demás nóminas de prueba serán purgadas de la base de datos con registro en auditoría.
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button type="button" className="btn-secondary mr-2" onClick={() => setMostrarModalLimpieza(false)} disabled={procesandoEliminar}>
+                Cancelar
+              </button>
+              <button type="button" className="btn-danger" onClick={confirmarLimpiarLotesPrueba} disabled={procesandoEliminar}>
+                {procesandoEliminar ? 'Limpiando lotes...' : 'Sí, Limpiar Lotes de Prueba'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
