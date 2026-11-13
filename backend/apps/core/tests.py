@@ -22,73 +22,82 @@ class NuamTestCaseBase(TestCase):
 
     def setUp(self):
         # 1. Roles
-        self.rol_operador = Rol.objects.create(
+        self.rol_operador, _ = Rol.objects.get_or_create(
             nombre_rol='Operador Corredora',
-            descripcion='Carga masiva, cálculo y validación',
-            nivel_acceso=1
+            defaults={'descripcion': 'Carga masiva, cálculo y validación', 'nivel_acceso': 1}
         )
-        self.rol_auditor = Rol.objects.create(
+        self.rol_auditor, _ = Rol.objects.get_or_create(
             nombre_rol='Auditor nuam',
-            descripcion='Revisión técnica y cierre de lote fiscal',
-            nivel_acceso=2
+            defaults={'descripcion': 'Revisión técnica y cierre de lote fiscal', 'nivel_acceso': 2}
         )
-        self.rol_admin = Rol.objects.create(
+        self.rol_admin, _ = Rol.objects.get_or_create(
             nombre_rol='Administrador Plataforma',
-            descripcion='Gobernanza global RBAC',
-            nivel_acceso=3
+            defaults={'descripcion': 'Gobernanza global RBAC', 'nivel_acceso': 3}
         )
 
         # 2. Usuarios
-        self.user_operador = Usuario.objects.create(
+        self.user_operador, _ = Usuario.objects.get_or_create(
             rut='12.345.678-9',
-            email='operador@larrainvial.cl',
-            nombre='Angelo Operador',
-            password_hash=make_password('Nuam2026!'),
-            id_rol=self.rol_operador,
-            id_corredora='LarrainVial S.A. Corredora'
+            defaults={
+                'email': 'operador@larrainvial.cl',
+                'nombre': 'Angelo Operador',
+                'password_hash': make_password('Nuam2026!'),
+                'id_rol': self.rol_operador,
+                'id_corredora': 'LarrainVial S.A. Corredora'
+            }
         )
-        self.user_auditor = Usuario.objects.create(
+        self.user_auditor, _ = Usuario.objects.get_or_create(
             rut='9.876.543-2',
-            email='auditor@nuam.com',
-            nombre='Martín Auditor',
-            password_hash=make_password('Nuam2026!'),
-            id_rol=self.rol_auditor,
-            id_corredora='nuam Holding Regional'
+            defaults={
+                'email': 'auditor@nuam.com',
+                'nombre': 'Martín Auditor',
+                'password_hash': make_password('Nuam2026!'),
+                'id_rol': self.rol_auditor,
+                'id_corredora': 'nuam Holding Regional'
+            }
         )
-        self.user_admin = Usuario.objects.create(
+        self.user_admin, _ = Usuario.objects.get_or_create(
             rut='11.222.333-4',
-            email='admin@nuam.com',
-            nombre='Vicente Admin',
-            password_hash=make_password('Nuam2026!'),
-            id_rol=self.rol_admin,
-            id_corredora='nuam Holding Regional'
+            defaults={
+                'email': 'admin@nuam.com',
+                'nombre': 'Vicente Admin',
+                'password_hash': make_password('Nuam2026!'),
+                'id_rol': self.rol_admin,
+                'id_corredora': 'nuam Holding Regional'
+            }
         )
 
         # 3. Emisor Oficial
-        self.emisor = Emisor.objects.create(
+        self.emisor, _ = Emisor.objects.get_or_create(
             rut_emisor='97.004.000-5',
-            razon_social='Banco de Chile',
-            pais_origen='Chile',
-            sector_economico='Bursátil / Financiero'
+            defaults={
+                'razon_social': 'Banco de Chile',
+                'pais_origen': 'Chile',
+                'sector_economico': 'Bursátil / Financiero'
+            }
         )
 
-        # 4. Certificado Base
-        self.cert = CertificadoDividendo.objects.create(
-            folio_certificado='LT-2026-0041',
-            rut_emisor=self.emisor,
-            anio_tributario=2026,
-            fecha_pago='2026-03-15',
-            monto_total_bruto=Decimal('3240500000.00'),
-            estado_proceso='Aprobado'
+        # 4. Certificado Base para Pruebas
+        self.cert, _ = CertificadoDividendo.objects.get_or_create(
+            folio_certificado='TEST-LT-2026-0041',
+            defaults={
+                'rut_emisor': self.emisor,
+                'anio_tributario': 2026,
+                'fecha_pago': '2026-03-15',
+                'monto_total_bruto': Decimal('3240500000.00'),
+                'estado_proceso': 'Aprobado'
+            }
         )
 
         # Factor exacto 1.000000
-        self.factor = FactorTributario.objects.create(
+        self.factor, _ = FactorTributario.objects.get_or_create(
             folio_certificado=self.cert,
-            factor_afecto=Decimal('0.700000'),
-            factor_exento=Decimal('0.300000'),
-            factor_credito=Decimal('0.100000'),
-            estado_validacion='VALIDADO'
+            defaults={
+                'factor_afecto': Decimal('0.700000'),
+                'factor_exento': Decimal('0.300000'),
+                'factor_credito': Decimal('0.100000'),
+                'estado_validacion': 'VALIDADO'
+            }
         )
 
         self.client = Client()
@@ -208,7 +217,7 @@ class CasosDeUsoTests(NuamTestCaseBase):
     # =========================================================================
     def test_cu05_cierre_lote_autorizado_auditor_http200(self):
         """CU-05: Auditor nuam puede aprobar y cerrar lote fiscal satisfactoriamente."""
-        url = reverse('api-certificados-cerrar', kwargs={'folio': 'LT-2026-0041'})
+        url = reverse('api-certificados-cerrar', kwargs={'folio': self.cert.folio_certificado})
         res = self.client.post(url, **self.auth_headers(self.token_auditor))
         self.assertEqual(res.status_code, 200)
         data = res.json()
@@ -220,7 +229,7 @@ class CasosDeUsoTests(NuamTestCaseBase):
 
     def test_cu05_cierre_lote_denegado_operador_http403(self):
         """CU-05: Operador Corredora es bloqueado al intentar cerrar lote fiscal (HTTP 403)."""
-        url = reverse('api-certificados-cerrar', kwargs={'folio': 'LT-2026-0041'})
+        url = reverse('api-certificados-cerrar', kwargs={'folio': self.cert.folio_certificado})
         res = self.client.post(url, **self.auth_headers(self.token_operador))
         self.assertEqual(res.status_code, 403)
         data = res.json()

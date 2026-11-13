@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import type { RolNombre, UsuarioAutenticado } from '../types';
+import type { UsuarioAutenticado } from '../types';
 import { api } from '../services/api';
 
 interface LoginViewProps {
@@ -7,14 +7,12 @@ interface LoginViewProps {
 }
 
 export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
-  // Cargar usuario y rol recordados desde almacenamiento local
+  // Cargar usuario recordado desde almacenamiento local
   const usuarioRecordado = localStorage.getItem('nuam_ultimo_usuario') || '';
-  const rolRecordado = (localStorage.getItem('nuam_ultimo_rol') as RolNombre) || 'Operador Corredora';
   const recordarInicial = localStorage.getItem('nuam_recordar_usuario') !== 'false';
 
   const [identificador, setIdentificador] = useState(usuarioRecordado);
   const [password, setPassword] = useState('');
-  const [rol, setRol] = useState<RolNombre>(rolRecordado);
   const [recordarUsuario, setRecordarUsuario] = useState(recordarInicial);
   const [codigoMfa, setCodigoMfa] = useState('');
   const [tokenMfaGenerado, setTokenMfaGenerado] = useState<string | null>(null);
@@ -46,7 +44,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
 
     const mfaLimpio = codigoMfa.trim();
     if (!mfaLimpio) {
-      setErrorMsg("Debe ingresar el código MFA de 6 dígitos. (Ingrese '123456' o presione '📲 OTP').");
+      setErrorMsg("Debe ingresar el código MFA de 6 dígitos (o presione '📲 OTP' para generar uno).");
       return;
     }
 
@@ -62,7 +60,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
         idLimpio,
         password,
         mfaLimpio,
-        rol,
+        undefined, // Autodetección de rol asignado al usuario
         tokenMfaGenerado || undefined
       );
 
@@ -70,11 +68,9 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
       if (recordarUsuario) {
         localStorage.setItem('nuam_recordar_usuario', 'true');
         localStorage.setItem('nuam_ultimo_usuario', idLimpio);
-        localStorage.setItem('nuam_ultimo_rol', rol);
       } else {
         localStorage.setItem('nuam_recordar_usuario', 'false');
         localStorage.removeItem('nuam_ultimo_usuario');
-        localStorage.removeItem('nuam_ultimo_rol');
       }
 
       onLoginSuccess(response.usuario);
@@ -135,57 +131,27 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
             />
           </div>
 
-          <div className="form-row">
-            <div className="form-group flex-1">
-              <label htmlFor="select-rol">Rol Institucional (RBAC)</label>
-              <select
-                id="select-rol"
-                className="form-select"
-                value={rol}
-                onChange={(e) => setRol(e.target.value as RolNombre)}
+          <div className="form-group">
+            <div className="flex justify-between items-center mb-1">
+              <label htmlFor="input-mfa">Código MFA (Autenticación de Dos Factores)</label>
+              <button
+                type="button"
+                className="btn-link text-xs font-bold"
+                onClick={generarNuevoMfa}
+                title="Generar código dinámico OTP"
               >
-                <option value="Operador Corredora">Operador Corredora</option>
-                <option value="Auditor nuam">Auditor nuam</option>
-                <option value="Administrador Plataforma">Administrador Plataforma</option>
-              </select>
+                📲 Generar OTP
+              </button>
             </div>
-
-            <div className="form-group w-mfa">
-              <div className="flex justify-between items-center">
-                <label htmlFor="input-mfa">Código MFA</label>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    className="btn-link text-xs"
-                    onClick={() => {
-                      setCodigoMfa('123456');
-                      setTokenMfaGenerado(null);
-                      setErrorMsg(null);
-                    }}
-                    title="Cargar código de desarrollo por defecto"
-                  >
-                    🔑 123456
-                  </button>
-                  <button
-                    type="button"
-                    className="btn-link text-xs"
-                    onClick={generarNuevoMfa}
-                    title="Generar código dinámico OTP"
-                  >
-                    📲 OTP
-                  </button>
-                </div>
-              </div>
-              <input
-                id="input-mfa"
-                type="text"
-                className="form-input text-center font-mono letter-spacing-lg"
-                maxLength={6}
-                value={codigoMfa}
-                onChange={(e) => setCodigoMfa(e.target.value)}
-                placeholder="123456"
-              />
-            </div>
+            <input
+              id="input-mfa"
+              type="text"
+              className="form-input text-center font-mono letter-spacing-lg"
+              maxLength={6}
+              value={codigoMfa}
+              onChange={(e) => setCodigoMfa(e.target.value)}
+              placeholder="000000"
+            />
           </div>
 
           <div className="form-group mb-4">
@@ -196,7 +162,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                 onChange={(e) => setRecordarUsuario(e.target.checked)}
                 className="w-4 h-4 cursor-pointer"
               />
-              <span>Recordar mi usuario y rol en este equipo</span>
+              <span>Recordar mi usuario en este equipo</span>
             </label>
           </div>
 
