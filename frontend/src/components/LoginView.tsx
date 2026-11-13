@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type { UsuarioAutenticado } from '../types';
 import { api } from '../services/api';
+import nuamLogo from '../assets/nuam-logo.png';
 
 interface LoginViewProps {
   onLoginSuccess: (usuario: UsuarioAutenticado) => void;
@@ -86,9 +87,12 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
       <div className="login-card">
         {/* Encabezado Institucional nuam */}
         <div className="login-header">
-          <div className="login-brand">
-            <span className="brand-nuam">nuam</span>
-            <span className="brand-subtitle">EXCHANGE GROUP</span>
+          <div className="login-brand" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.85rem' }}>
+            <img src={nuamLogo} alt="nuam" style={{ height: '52px', width: '52px', objectFit: 'contain', borderRadius: '10px' }} />
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+              <span className="brand-nuam" style={{ lineHeight: '1' }}>nuam</span>
+              <span className="brand-subtitle">EXCHANGE GROUP</span>
+            </div>
           </div>
           <div className="regional-badge">Holding Bursátil Regional (Chile · Perú · Colombia)</div>
           <h1 className="portal-title">Mantenedor Centralizado de Calificaciones Tributarias</h1>

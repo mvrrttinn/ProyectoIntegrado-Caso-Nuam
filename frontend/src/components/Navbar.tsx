@@ -1,5 +1,6 @@
 import React from 'react';
 import type { UsuarioAutenticado } from '../types';
+import nuamLogo from '../assets/nuam-logo.png';
 
 interface NavbarProps {
   usuario: UsuarioAutenticado | null;
@@ -10,9 +11,12 @@ export const Navbar: React.FC<NavbarProps> = ({ usuario, onLogout }) => {
   return (
     <header className="nuam-topbar">
       <div className="topbar-left">
-        <div className="logo-badge">
-          <span className="logo-text">nuam</span>
-          <span className="logo-subtext">EXCHANGE GROUP</span>
+        <div className="logo-badge" style={{ flexDirection: 'row', alignItems: 'center', gap: '0.75rem' }}>
+          <img src={nuamLogo} alt="nuam" style={{ height: '36px', width: '36px', objectFit: 'contain', borderRadius: '6px' }} />
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <span className="logo-text" style={{ lineHeight: '1.1' }}>nuam</span>
+            <span className="logo-subtext">EXCHANGE GROUP</span>
+          </div>
         </div>
         <div className="system-pill">
           <span className="system-title">Mantenedor de Dividendos y Factores Tributarios</span>
