@@ -7,7 +7,7 @@ from django.urls import path
 from apps.core.views import (
     LoginView, UploadDividendosView, CalcularFactoresView,
     CertificadosListView, CerrarLoteFiscalView, AuditoriaListView,
-    DashboardStatsView, UsuariosListCreateView
+    DashboardStatsView, UsuariosListCreateView, UsuarioDetailView, RolesListView
 )
 
 urlpatterns = [
@@ -34,4 +34,6 @@ urlpatterns = [
 
     # CU-07 Gestión y Gobernanza de Usuarios RBAC
     path('usuarios/', UsuariosListCreateView.as_view(), name='api-usuarios-list-create'),
+    path('usuarios/<int:pk>/', UsuarioDetailView.as_view(), name='api-usuario-detail'),
+    path('roles/', RolesListView.as_view(), name='api-roles-list'),
 ]

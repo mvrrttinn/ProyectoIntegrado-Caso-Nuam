@@ -344,3 +344,54 @@ class UsuariosListCreateView(APIView):
         password_raw = request.data.get('password', 'Nuam2026!')
         usuario.cambiar_contrasena(password_raw)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class UsuarioDetailView(APIView):
+    """
+    PATCH /api/v1/usuarios/<int:pk>/
+    Actualización de rol y estado de usuario. Exclusivo 'Administrador Plataforma'.
+    """
+    authentication_classes = [NuamJWTAuthentication]
+    permission_classes = [IsAuthenticated, rol_requerido('Administrador Plataforma')]
+
+    def patch(self, request, pk):
+        usuario = Usuario.objects.filter(pk=pk).first()
+        if not usuario:
+            return Response({'error': 'Usuario no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+
+        id_rol = request.data.get('id_rol')
+        if id_rol:
+            rol = Rol.objects.filter(id_rol=id_rol).first()
+            if not rol:
+                return Response({'error': 'Rol inválido'}, status=status.HTTP_400_BAD_REQUEST)
+            usuario.id_rol = rol
+
+        estado = request.data.get('estado')
+        if estado:
+            usuario.estado = estado
+
+        usuario.save()
+
+        AuditAlertsService.registrar_evento(
+            usuario=request.user,
+            accion="ACTUALIZACION_ROL_RBAC",
+            detalles_extra={'usuario_afectado': usuario.email, 'nuevo_rol': usuario.id_rol.nombre_rol}
+        )
+
+        serializer = UsuarioSerializer(usuario)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class RolesListView(APIView):
+    """
+    GET /api/v1/roles/
+    Lista de roles para selectores de asignación RBAC.
+    """
+    authentication_classes = [NuamJWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from apps.core.serializers import RolSerializer
+        roles = Rol.objects.all().order_by('nivel_acceso')
+        serializer = RolSerializer(roles, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)

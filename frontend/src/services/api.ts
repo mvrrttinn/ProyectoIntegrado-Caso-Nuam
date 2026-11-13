@@ -156,13 +156,49 @@ class ApiClient {
     return res.json();
   }
 
-  // --- Gestión de Usuarios (CU-07) ---
+  // --- Gestión de Usuarios y Roles (CU-07) ---
   async getUsuarios(): Promise<any[]> {
     const res = await fetch(`${API_BASE_URL}/usuarios/`, {
       headers: this.getHeaders()
     });
     if (!res.ok) {
       throw new Error('Error al consultar usuarios (se requiere perfil Administrador).');
+    }
+    return res.json();
+  }
+
+  async getRoles(): Promise<any[]> {
+    const res = await fetch(`${API_BASE_URL}/roles/`, {
+      headers: this.getHeaders()
+    });
+    if (!res.ok) {
+      throw new Error('Error al consultar roles.');
+    }
+    return res.json();
+  }
+
+  async updateUsuarioRol(idUsuario: number, idRol: number): Promise<any> {
+    const res = await fetch(`${API_BASE_URL}/usuarios/${idUsuario}/`, {
+      method: 'PATCH',
+      headers: this.getHeaders(),
+      body: JSON.stringify({ id_rol: idRol })
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || 'Error al actualizar rol del usuario.');
+    }
+    return res.json();
+  }
+
+  async crearUsuario(usuarioData: any): Promise<any> {
+    const res = await fetch(`${API_BASE_URL}/usuarios/`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      body: JSON.stringify(usuarioData)
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.mensaje || JSON.stringify(err) || 'Error al crear usuario.');
     }
     return res.json();
   }

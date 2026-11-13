@@ -3,14 +3,90 @@ import { api } from '../services/api';
 
 export const RbacAdminView: React.FC = () => {
   const [usuarios, setUsuarios] = useState<any[]>([]);
+  const [roles, setRoles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [mensaje, setMensaje] = useState<{ tipo: 'success' | 'error'; texto: string } | null>(null);
+  const [modalNuevo, setModalNuevo] = useState(false);
+
+  // Formulario nuevo usuario
+  const [nuevoNombre, setNuevoNombre] = useState('');
+  const [nuevoRut, setNuevoRut] = useState('');
+  const [nuevoEmail, setNuevoEmail] = useState('');
+  const [nuevaCorredora, setNuevaCorredora] = useState('LarrainVial S.A. Corredora');
+  const [nuevoRolId, setNuevoRolId] = useState<number>(1);
+  const [guardando, setGuardando] = useState(false);
+
+  const cargarDatos = async () => {
+    setLoading(true);
+    try {
+      const [usersData, rolesData] = await Promise.all([
+        api.getUsuarios(),
+        api.getRoles().catch(() => [
+          { id_rol: 1, nombre_rol: 'Operador Corredora' },
+          { id_rol: 2, nombre_rol: 'Auditor nuam' },
+          { id_rol: 3, nombre_rol: 'Administrador Plataforma' },
+        ])
+      ]);
+      setUsuarios(usersData);
+      setRoles(rolesData);
+    } catch (err: any) {
+      console.error('Error cargando datos RBAC:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    api.getUsuarios()
-      .then(setUsuarios)
-      .catch((err) => console.error('Error cargando usuarios:', err))
-      .finally(() => setLoading(false));
+    cargarDatos();
   }, []);
+
+  const handleCambiarRol = async (idUsuario: number, nuevoIdRol: number, nombreUser: string) => {
+    try {
+      await api.updateUsuarioRol(idUsuario, nuevoIdRol);
+      setMensaje({
+        tipo: 'success',
+        texto: `✅ Rol actualizado con éxito para ${nombreUser}. Evento registrado en la bitácora criptográfica con firma SHA-256.`
+      });
+      cargarDatos();
+    } catch (err: any) {
+      setMensaje({
+        tipo: 'error',
+        texto: err.message || 'Error al actualizar el rol.'
+      });
+    }
+  };
+
+  const handleCrearUsuario = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setGuardando(true);
+    setMensaje(null);
+    try {
+      await api.crearUsuario({
+        rut: nuevoRut.trim(),
+        nombre: nuevoNombre.trim(),
+        email: nuevoEmail.trim(),
+        id_corredora: nuevaCorredora.trim(),
+        id_rol: nuevoRolId,
+        password: 'Nuam2026!'
+      });
+      setMensaje({
+        tipo: 'success',
+        texto: `✅ Usuario '${nuevoNombre}' creado exitosamente con contraseña temporal 'Nuam2026!' y token MFA activo.`
+      });
+      setModalNuevo(false);
+      setNuevoNombre('');
+      setNuevoRut('');
+      setNuevoEmail('');
+      cargarDatos();
+    } catch (err: any) {
+      setMensaje({
+        tipo: 'error',
+        texto: err.message || 'Error al crear el nuevo usuario.'
+      });
+    } finally {
+      setGuardando(false);
+    }
+  };
 
   return (
     <div className="rbac-view-container">
@@ -18,10 +94,25 @@ export const RbacAdminView: React.FC = () => {
         <div>
           <h2 className="view-title">Gobernanza de Accesos y Seguridad RBAC (CU-07)</h2>
           <p className="view-subtitle">
-            Administración de privilegios, segregación de funciones y cumplimiento ISO/IEC 27001 Control A.9.
+            Administración de privilegios, asignación dinámica de roles y cumplimiento ISO/IEC 27001 Control A.9.
           </p>
         </div>
+        <div className="view-actions">
+          <button type="button" className="btn-primary" onClick={() => setModalNuevo(true)}>
+            ➕ Registrar Nuevo Usuario
+          </button>
+          <button type="button" className="btn-secondary" onClick={cargarDatos}>
+            🔄 Actualizar Directorio
+          </button>
+        </div>
       </div>
+
+      {mensaje && (
+        <div className={`alert-banner ${mensaje.tipo === 'success' ? 'alert-success' : 'alert-error'} mb-6`}>
+          <span className="alert-icon">{mensaje.tipo === 'success' ? '✅' : '⚠️'}</span>
+          <span className="alert-text">{mensaje.texto}</span>
+        </div>
+      )}
 
       {/* Matriz de Segregación de Funciones (SoD) */}
       <div className="content-card mb-6">
@@ -82,12 +173,17 @@ export const RbacAdminView: React.FC = () => {
         </div>
       </div>
 
-      {/* Tabla de Usuarios Registrados */}
+      {/* Tabla de Usuarios Registrados y Asignación de Roles */}
       <div className="content-card">
-        <h3 className="card-title">Usuarios Activos en Plataforma nuam</h3>
-        <p className="card-subtitle mb-4">
-          Cuentas institucionales con autenticación federada Supabase Auth / JWT.
-        </p>
+        <div className="card-header-flex">
+          <div>
+            <h3 className="card-title">Directorio de Usuarios y Asignación de Roles</h3>
+            <p className="card-subtitle">
+              Cambia el rol de un usuario directamente desde el desplegable para modificar sus permisos de inmediato.
+            </p>
+          </div>
+          <span className="badge-audit-count">{usuarios.length} Usuarios Registrados</span>
+        </div>
 
         {loading ? (
           <div className="table-loading">Cargando directorio de usuarios...</div>
@@ -100,7 +196,7 @@ export const RbacAdminView: React.FC = () => {
                   <th>RUT</th>
                   <th>Correo Institucional</th>
                   <th>Institución / Corredora</th>
-                  <th>Rol Asignado</th>
+                  <th>Rol Actual / Asignar Nuevo Rol</th>
                   <th>Estado</th>
                 </tr>
               </thead>
@@ -112,12 +208,22 @@ export const RbacAdminView: React.FC = () => {
                     <td>{u.email}</td>
                     <td>{u.id_corredora}</td>
                     <td>
-                      <span className={`role-badge role-${(u.rol_nombre || '').toLowerCase().replace(/\s+/g, '-')}`}>
-                        {u.rol_nombre}
-                      </span>
+                      <select
+                        className="form-select text-sm py-1 font-semibold"
+                        value={u.id_rol}
+                        onChange={(e) => handleCambiarRol(u.id_usuario, Number(e.target.value), u.nombre || u.email)}
+                      >
+                        {roles.map((r) => (
+                          <option key={r.id_rol} value={r.id_rol}>
+                            {r.nombre_rol}
+                          </option>
+                        ))}
+                      </select>
                     </td>
                     <td>
-                      <span className="status-pill status-aprobado">{u.estado}</span>
+                      <span className={`status-pill ${u.estado === 'ACTIVO' ? 'status-aprobado' : 'status-observado'}`}>
+                        {u.estado}
+                      </span>
                     </td>
                   </tr>
                 ))}
@@ -126,6 +232,103 @@ export const RbacAdminView: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Modal Crear Nuevo Usuario */}
+      {modalNuevo && (
+        <div className="modal-backdrop" onClick={() => setModalNuevo(false)}>
+          <div className="modal-dialog" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3 className="modal-title">Registrar Nuevo Usuario Institucional</h3>
+              <button type="button" className="btn-close" onClick={() => setModalNuevo(false)}>✕</button>
+            </div>
+            <form onSubmit={handleCrearUsuario}>
+              <div className="modal-body">
+                <div className="form-group mb-4">
+                  <label htmlFor="modal-nombre">Nombre Completo:</label>
+                  <input
+                    id="modal-nombre"
+                    type="text"
+                    className="form-input"
+                    value={nuevoNombre}
+                    onChange={(e) => setNuevoNombre(e.target.value)}
+                    placeholder="Ej: Carolina Santander"
+                    required
+                  />
+                </div>
+
+                <div className="form-row mb-4">
+                  <div className="form-group flex-1">
+                    <label htmlFor="modal-rut">RUT:</label>
+                    <input
+                      id="modal-rut"
+                      type="text"
+                      className="form-input"
+                      value={nuevoRut}
+                      onChange={(e) => setNuevoRut(e.target.value)}
+                      placeholder="15.678.901-2"
+                      required
+                    />
+                  </div>
+                  <div className="form-group flex-2">
+                    <label htmlFor="modal-email">Correo Institucional:</label>
+                    <input
+                      id="modal-email"
+                      type="email"
+                      className="form-input"
+                      value={nuevoEmail}
+                      onChange={(e) => setNuevoEmail(e.target.value)}
+                      placeholder="usuario@larrainvial.cl"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="form-row mb-4">
+                  <div className="form-group flex-1">
+                    <label htmlFor="modal-corredora">Institución:</label>
+                    <input
+                      id="modal-corredora"
+                      type="text"
+                      className="form-input"
+                      value={nuevaCorredora}
+                      onChange={(e) => setNuevaCorredora(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="form-group flex-1">
+                    <label htmlFor="modal-rol">Rol a Asignar:</label>
+                    <select
+                      id="modal-rol"
+                      className="form-select"
+                      value={nuevoRolId}
+                      onChange={(e) => setNuevoRolId(Number(e.target.value))}
+                    >
+                      {roles.map((r) => (
+                        <option key={r.id_rol} value={r.id_rol}>
+                          {r.nombre_rol}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="alert-box-notice">
+                  ℹ️ El nuevo usuario se registrará con la contraseña provisional <code>Nuam2026!</code> y código MFA <code>123456</code>.
+                </div>
+              </div>
+
+              <div className="modal-footer">
+                <button type="button" className="btn-secondary mr-2" onClick={() => setModalNuevo(false)}>
+                  Cancelar
+                </button>
+                <button type="submit" className="btn-primary" disabled={guardando}>
+                  {guardando ? 'Guardando...' : 'Crear Usuario'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
