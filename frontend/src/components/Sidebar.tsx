@@ -102,9 +102,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div className="sidebar-footer">
           <div className="compliance-stamp">
             <span className="stamp-icon">🔒</span>
-            <span className="stamp-text">ISO/IEC 27001 & CMF</span>
+            <span className="stamp-text">ISO 27001 · Ley 21.719</span>
           </div>
-          <div className="compliance-sub">Precisión Decimal (6 dec.)</div>
+          <div className="compliance-sub">Protección de Datos & CMF</div>
         </div>
       </aside>
     </>

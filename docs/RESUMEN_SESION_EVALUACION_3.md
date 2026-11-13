@@ -168,6 +168,16 @@ python manage.py run_qa_protocol
 3. **¿Cómo se comprueba que la bitácora de auditoría no fue adulterada?**  
    *Respuesta:* "Cada registro emite un hash canónico SHA-256 sobre su payload. Si un administrador o tercero modifica un registro directamente en la base de datos, el algoritmo de auditoría detecta la alteración matemática y clasifica el evento como `ALTERADO_ANOMALÍA`, alertando al oficial de cumplimiento."
 
+4. **¿Cómo cumple el sistema con la Ley N° 21.719 de Protección de Datos Personales (y estándar ISO 27001 / 27701)?**  
+   *Respuesta:* "El sistema adopta el principio de **Privacidad desde el Diseño** (*Privacy by Design*):
+   * **Derechos ARCO:** Soporte nativo para *Acceso y Rectificación* (`PATCH /usuarios/<id>/`) y *Supresión / Cancelación* (`DELETE /usuarios/<id>/`).
+   * **Seguridad Criptográfica:** Las contraseñas se almacenan exclusivamente con salteado irreversible PBKDF2-SHA256 y nunca se exponen en las respuestas de la API (`write_only: True`).
+   * **Trazabilidad y Responsabilidad Proactiva (*Accountability*):** Cada acceso, modificación o baja de datos genera un registro inmutable con firma SHA-256 en la bitácora de auditoría.
+   * **Autenticación Fuerte:** Doble factor MFA obligatorio para impedir accesos no autorizados a datos financieros."
+
+5. **¿Cómo se relaciona con la norma técnica de pruebas ISO/IEC/IEEE 29119?**  
+   *Respuesta:* "En el ámbito de calidad de software y aseguramiento de testing, el proyecto cuenta con el **100% de conformidad**: 12 de 12 pruebas unitarias pasando (`apps.core.tests`) y 11 de 11 casos de prueba normativos aprobados en el protocolo de benchmark técnico (`docs/REPORTE_PRUEBAS_EVALUACION_3.md`)."
+
 ---
 
 ## 📋 6. Reglas de Trabajo con Git

@@ -185,10 +185,10 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
           </button>
         </form>
 
-        {/* Sello de Conformidad ISO 27001 / CMF */}
+        {/* Sello de Conformidad ISO 27001 / Ley 21.719 / CMF */}
         <div className="login-footer-security">
           <span className="sec-icon">🔒</span>
-          <span>Conexión cifrada TLS 1.3 — Cumplimiento CMF / ISO 27001 Control A.9</span>
+          <span>Conexión cifrada TLS 1.3 — Cumplimiento CMF / ISO 27001 / Ley N° 21.719</span>
         </div>
       </div>
     </div>
