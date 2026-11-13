@@ -387,8 +387,8 @@ export const RbacAdminView: React.FC = () => {
 
       {/* Modal Editar Usuario Completo */}
       {usuarioEditando && (
-        <div className="modal-backdrop" onClick={() => setUsuarioEditando(null)}>
-          <div className="modal-dialog modal-lg" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-backdrop">
+          <div className="modal-dialog modal-lg">
             <div className="modal-header">
               <h3 className="modal-title">Editar Usuario — {usuarioEditando.nombre || usuarioEditando.email}</h3>
               <button type="button" className="btn-close" onClick={() => setUsuarioEditando(null)}>✕</button>
@@ -511,8 +511,8 @@ export const RbacAdminView: React.FC = () => {
 
       {/* Modal Registrar Nuevo Usuario */}
       {modalNuevo && (
-        <div className="modal-backdrop" onClick={() => setModalNuevo(false)}>
-          <div className="modal-dialog" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-backdrop">
+          <div className="modal-dialog">
             <div className="modal-header">
               <h3 className="modal-title">Registrar Nuevo Usuario Institucional</h3>
               <button type="button" className="btn-close" onClick={() => setModalNuevo(false)}>✕</button>
