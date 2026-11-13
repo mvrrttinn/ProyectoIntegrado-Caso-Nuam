@@ -1,0 +1,5 @@
+folio_certificado,rut_emisor,razon_social,anio_tributario,fecha_pago,monto_total_bruto,monto_afecto,monto_exento,monto_credito
+LT-2026-1001,97.004.000-5,Banco de Chile,2026,2026-04-15,10000000.00,7500000.00,2500000.00,2025000.00
+LT-2026-1002,91.564.000-8,Falabella S.A.,2026,2026-04-20,5000000.00,3250000.00,1750000.00,877500.00
+LT-2026-1003,90.222.000-2,Empresas CMPC S.A.,2026,2026-05-02,8400000.00,4200000.00,4200000.00,1134000.00
+LT-2026-1004,89.862.200-2,Empresa Nacional de Telecomunicaciones S.A. (Entel),2026,2026-05-10,3600000.00,1800000.00,1800000.00,486000.00
