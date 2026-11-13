@@ -135,6 +135,28 @@ class Usuario(models.Model):
             return True
         return False
 
+    @staticmethod
+    def validar_password_reforzada(password: str) -> tuple[bool, str]:
+        """
+        Política de seguridad ISO/IEC 27001 & CMF para contraseñas reforzadas:
+        - Mínimo 8 caracteres
+        - Al menos una letra mayúscula (A-Z)
+        - Al menos una letra minúscula (a-z)
+        - Al menos un dígito numérico (0-9)
+        - Al menos un carácter especial o signo (!@#$%^&*()_+-=[]{}|;:,.<>? etc.)
+        """
+        if not password or len(password) < 8:
+            return False, "La contraseña debe tener al menos 8 caracteres."
+        if not re.search(r'[A-Z]', password):
+            return False, "La contraseña debe incluir al menos una letra mayúscula (A-Z)."
+        if not re.search(r'[a-z]', password):
+            return False, "La contraseña debe incluir al menos una letra minúscula (a-z)."
+        if not re.search(r'[0-9]', password):
+            return False, "La contraseña debe incluir al menos un número (0-9)."
+        if not re.search(r'[^A-Za-z0-9]', password):
+            return False, "La contraseña debe incluir al menos un carácter especial o signo (ej: ! @ # $ % & *)."
+        return True, ""
+
     def cambiar_contrasena(self, nueva_pass: str) -> None:
         """Genera hash seguro PBKDF2/Argon2 y actualiza la contraseña."""
         self.password_hash = make_password(nueva_pass)

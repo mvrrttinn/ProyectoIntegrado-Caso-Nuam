@@ -164,11 +164,10 @@
   border-right: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
 }
 
 .sidebar-header {
-  padding: 1.5rem 1.25rem 0.75rem 1.25rem;
+  padding: 1.25rem 1.25rem 0.75rem 1.25rem;
 }
 
 .sidebar-section-title {
@@ -182,7 +181,8 @@
   display: flex;
   flex-direction: column;
   padding: 0 0.75rem;
-  gap: 0.35rem;
+  gap: 0.4rem;
+  flex: 1;
 }
 
 .nav-item {
@@ -227,6 +227,7 @@
 }
 
 .sidebar-footer {
+  margin-top: auto;
   padding: 1.5rem 1.25rem;
   border-top: 1px solid var(--border-color);
 }
@@ -994,6 +995,47 @@
   padding: 1.25rem;
   border-radius: var(--radius-sm);
   margin-top: 1.25rem;
+}
+
+/* Indicador de Política de Contraseñas Reforzadas */
+.password-policy-card {
+  background-color: rgba(15, 23, 42, 0.6);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem 1rem;
+  margin-top: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.password-policy-title {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+
+.password-policy-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.35rem 0.75rem;
+}
+
+.policy-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  transition: all 0.2s ease;
+}
+
+.policy-item.met {
+  color: var(--color-success);
+  font-weight: 600;
+}
+
+.policy-item.unmet {
+  color: var(--text-dim);
 }
 
 .factor-breakdown-box h4 {

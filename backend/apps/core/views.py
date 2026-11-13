@@ -352,8 +352,16 @@ class UsuariosListCreateView(APIView):
         serializer = UsuarioSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        usuario = serializer.save()
+
         password_raw = request.data.get('password', 'Nuam2026!')
+        es_valida, msg_error = Usuario.validar_password_reforzada(password_raw)
+        if not es_valida:
+            return Response({
+                'error': 'PASSWORD_INSEGURA',
+                'mensaje': msg_error
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        usuario = serializer.save()
         usuario.cambiar_contrasena(password_raw)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -402,7 +410,14 @@ class UsuarioDetailView(APIView):
 
         password = request.data.get('password')
         if password and str(password).strip():
-            usuario.cambiar_contrasena(password.strip())
+            pass_limpia = str(password).strip()
+            es_valida, msg_error = Usuario.validar_password_reforzada(pass_limpia)
+            if not es_valida:
+                return Response({
+                    'error': 'PASSWORD_INSEGURA',
+                    'mensaje': msg_error
+                }, status=status.HTTP_400_BAD_REQUEST)
+            usuario.cambiar_contrasena(pass_limpia)
 
         usuario.save()
 

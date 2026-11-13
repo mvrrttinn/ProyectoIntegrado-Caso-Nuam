@@ -69,6 +69,21 @@ Se configuraron los archivos locales protegidos por `.gitignore`:
   ```
 * **`backend/.env`:** Contiene los parámetros de desarrollo y fallback a SQLite para pruebas desconectadas.
 
+### 3.5. Alineación Superior del Menú Lateral (Sidebar)
+* **Problema:** Los botones del menú de navegación (`Dashboard`, `Carga Masiva`, `Repositorio`, `Bitácora`) quedaban flotando en la mitad inferior de la pantalla debido a un `justify-content: space-between` en el contenedor flex.
+* **Solución aplicada:** Se reestructuró el CSS en `App.css` aplicando `.sidebar-nav { flex: 1; }` y `.sidebar-footer { margin-top: auto; }`. Con esto, las opciones de gestión quedan ancladas limpiamente arriba debajo del título **"MÓDULOS DE GESTIÓN"**, y el sello de conformidad CMF/ISO se mantiene abajo.
+
+### 3.6. Política de Contraseñas Reforzadas (ISO/IEC 27001 Control A.9)
+A solicitud de la comisión docente, se implementó una política estricta de robustez tanto en frontend como en backend para la creación y edición de usuarios:
+* **Reglas validadas:**
+  1. Mínimo **8 caracteres**.
+  2. Al menos **1 letra mayúscula** (`A-Z`).
+  3. Al menos **1 letra minúscula** (`a-z`).
+  4. Al menos **1 número** (`0-9`).
+  5. Al menos **1 carácter especial o signo** (`!`, `@`, `#`, `$`, `%`, `&`, `*`, etc.).
+* **Frontend:** Se integró un componente visual interactivo `PasswordPolicyChecklist` en los modales de **Registrar Usuario** y **Editar Usuario**, que marca con `✅` en verde cada requisito cumplido en tiempo real mientras el usuario escribe.
+* **Backend:** Método `Usuario.validar_password_reforzada()` ejecutado en `POST /api/v1/usuarios/` y `PATCH /api/v1/usuarios/<id>/`, devolviendo `HTTP 400 Bad Request` si la contraseña no cumple con la política.
+
 ---
 
 ## 💻 4. Guía para Continuar Trabajando desde Casa

@@ -1,6 +1,65 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../services/api';
 
+interface PasswordPolicyStatus {
+  minLen: boolean;
+  hasMayus: boolean;
+  hasMinus: boolean;
+  hasNum: boolean;
+  hasSpecial: boolean;
+  esValida: boolean;
+}
+
+const evaluarPassword = (pass: string): PasswordPolicyStatus => {
+  const minLen = pass.length >= 8;
+  const hasMayus = /[A-Z]/.test(pass);
+  const hasMinus = /[a-z]/.test(pass);
+  const hasNum = /[0-9]/.test(pass);
+  const hasSpecial = /[^A-Za-z0-9]/.test(pass);
+  return {
+    minLen,
+    hasMayus,
+    hasMinus,
+    hasNum,
+    hasSpecial,
+    esValida: minLen && hasMayus && hasMinus && hasNum && hasSpecial,
+  };
+};
+
+const PasswordPolicyChecklist: React.FC<{ password: string; isOptional?: boolean }> = ({ password, isOptional }) => {
+  if (isOptional && !password.trim()) return null;
+  const status = evaluarPassword(password);
+  return (
+    <div className="password-policy-card">
+      <span className="password-policy-title">
+        {status.esValida ? '✅ Contraseña Reforzada Válida (ISO/IEC 27001)' : '🛡️ Requisitos de Contraseña Reforzada:'}
+      </span>
+      <div className="password-policy-grid">
+        <div className={`policy-item ${status.minLen ? 'met' : 'unmet'}`}>
+          <span>{status.minLen ? '✅' : '⚪'}</span>
+          <span>Mínimo 8 caracteres</span>
+        </div>
+        <div className={`policy-item ${status.hasMayus ? 'met' : 'unmet'}`}>
+          <span>{status.hasMayus ? '✅' : '⚪'}</span>
+          <span>1 Letra Mayúscula (A-Z)</span>
+        </div>
+        <div className={`policy-item ${status.hasMinus ? 'met' : 'unmet'}`}>
+          <span>{status.hasMinus ? '✅' : '⚪'}</span>
+          <span>1 Letra Minúscula (a-z)</span>
+        </div>
+        <div className={`policy-item ${status.hasNum ? 'met' : 'unmet'}`}>
+          <span>{status.hasNum ? '✅' : '⚪'}</span>
+          <span>1 Número (0-9)</span>
+        </div>
+        <div className={`policy-item ${status.hasSpecial ? 'met' : 'unmet'}`}>
+          <span>{status.hasSpecial ? '✅' : '⚪'}</span>
+          <span>1 Símbolo especial (!, @, #, $, etc.)</span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export const RbacAdminView: React.FC = () => {
   const [usuarios, setUsuarios] = useState<any[]>([]);
   const [roles, setRoles] = useState<any[]>([]);
@@ -78,6 +137,15 @@ export const RbacAdminView: React.FC = () => {
     };
 
     if (editPassword.trim()) {
+      const policy = evaluarPassword(editPassword.trim());
+      if (!policy.esValida) {
+        setMensaje({
+          tipo: 'error',
+          texto: '⚠️ La contraseña no cumple con la política de seguridad reforzada (mínimo 8 caracteres, al menos una mayúscula, una minúscula, un número y un carácter especial).'
+        });
+        setGuardando(false);
+        return;
+      }
       payload.password = editPassword.trim();
     }
 
@@ -119,6 +187,18 @@ export const RbacAdminView: React.FC = () => {
     e.preventDefault();
     setGuardando(true);
     setMensaje(null);
+
+    const passLimpia = nuevaPassword.trim() || 'Nuam2026!';
+    const policy = evaluarPassword(passLimpia);
+    if (!policy.esValida) {
+      setMensaje({
+        tipo: 'error',
+        texto: '⚠️ La contraseña personalizada no cumple con la política reforzada (mínimo 8 caracteres, al menos una mayúscula, una minúscula, un número y un carácter especial).'
+      });
+      setGuardando(false);
+      return;
+    }
+
     try {
       await api.crearUsuario({
         rut: nuevoRut.trim(),
@@ -126,7 +206,7 @@ export const RbacAdminView: React.FC = () => {
         email: nuevoEmail.trim(),
         id_corredora: nuevaCorredora.trim(),
         id_rol: nuevoRolId,
-        password: nuevaPassword.trim() || 'Nuam2026!'
+        password: passLimpia
       });
       setMensaje({
         tipo: 'success',
@@ -408,6 +488,7 @@ export const RbacAdminView: React.FC = () => {
                     onChange={(e) => setEditPassword(e.target.value)}
                     placeholder="•••••••••••• (Escribe una nueva clave solo si deseas cambiarla)"
                   />
+                  <PasswordPolicyChecklist password={editPassword} isOptional={true} />
                 </div>
 
                 <div className="alert-box-notice">
@@ -508,7 +589,7 @@ export const RbacAdminView: React.FC = () => {
                 </div>
 
                 <div className="form-group mb-4">
-                  <label htmlFor="modal-pass">Contraseña Personalizada:</label>
+                  <label htmlFor="modal-pass">Contraseña Personalizada (Seguridad Reforzada):</label>
                   <input
                     id="modal-pass"
                     type="text"
@@ -518,6 +599,7 @@ export const RbacAdminView: React.FC = () => {
                     placeholder="Escribe la clave que desees (ej: MiClaveSegura2026!)"
                     required
                   />
+                  <PasswordPolicyChecklist password={nuevaPassword} isOptional={false} />
                 </div>
 
                 <div className="alert-box-notice">
