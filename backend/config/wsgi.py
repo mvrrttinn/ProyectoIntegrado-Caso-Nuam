@@ -18,6 +18,6 @@ application = get_wsgi_application()
 # Auto-ejecución de migraciones y sembrado en despliegues en la nube (Render / Cloud)
 try:
     from django.core.management import call_command
-    call_command('migrate', interactive=False, verbosity=0)
+    call_command('migrate', fake_initial=True, interactive=False, verbosity=0)
 except Exception as e:
     print(f"Aviso WSGI: Inicialización de base de datos diferida: {e}")
