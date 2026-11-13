@@ -75,6 +75,11 @@ Comando ejecutado: `python manage.py test apps.core` — **12 de 12 Tests Exitos
 ### 4.3. Integridad Criptográfica de la Bitácora (Persistencia Híbrida)
 - La prueba `CP-09` demostró que cualquier modificación manual o adulteración directa sobre los campos JSON en la base de datos invalida de inmediato la firma SHA-256 (`es_integro = False`), garantizando una cadena de auditoría inmutable e inviolable frente a auditorías externas de la CMF.
 
+### 4.4. Políticas de Seguridad de Contraseñas y Depuración Segura de Datos
+- **Contraseñas Reforzadas (ISO/IEC 27001):** Validación integral (8+ caracteres, mayúscula, minúscula, número y símbolo especial) implementada tanto a nivel cliente (checklist interactivo en tiempo real) como backend (`HTTP 400 Bad Request` ante incumplimiento).
+- **Depuración Manual y Limpieza de Lotes de Prueba:** Se incorporaron los endpoints de eliminación atómica (`DELETE /api/v1/certificados/<folio>/`, `DELETE /api/v1/usuarios/<id>/`) y limpieza de lotes de demostración (`POST /api/v1/certificados/limpiar-pruebas/`), restableciendo la base de datos a sus 5 lotes oficiales normativos con registro de auditoría SHA-256.
+- **Feedback Visual Ininterrumpido:** Notificación flotante global con isotipo nuam y spinner circular reactivo ante todas las llamadas asíncronas para eliminar la sensación de bloqueo en la interfaz.
+
 ---
 
 ## 5. Resumen de Calidad y Conclusión Técnica

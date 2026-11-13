@@ -171,10 +171,11 @@
 }
 
 .sidebar-section-title {
-  font-size: 0.7rem;
+  font-size: 0.72rem;
   font-weight: 800;
-  letter-spacing: 1px;
-  color: var(--text-dim);
+  letter-spacing: 1.2px;
+  color: var(--text-muted);
+  text-transform: uppercase;
 }
 
 .sidebar-nav {
@@ -1241,3 +1242,92 @@
 .text-success { color: var(--color-success); }
 .text-danger { color: var(--color-danger); }
 .text-muted { color: var(--text-muted); }
+
+/* Notificación Flotante con Ícono nuam y Spinner Circular */
+.nuam-floating-loader {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  z-index: 999999;
+  display: flex;
+  align-items: center;
+  gap: 0.95rem;
+  background: rgba(15, 23, 42, 0.94);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(249, 115, 22, 0.45);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.65), 0 0 20px rgba(249, 115, 22, 0.25);
+  border-radius: 12px;
+  padding: 0.75rem 1.15rem;
+  animation: toastSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  pointer-events: none;
+}
+
+@keyframes toastSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.loader-icon-container {
+  position: relative;
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.loader-spinner-ring {
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  border: 3px solid rgba(249, 115, 22, 0.15);
+  border-top-color: #f97316;
+  border-right-color: #ef4444;
+  animation: nuamCircleSpin 0.75s linear infinite;
+}
+
+@keyframes nuamCircleSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loader-nuam-img {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+  border-radius: 5px;
+  z-index: 1;
+}
+
+.loader-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.loader-brand-tag {
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  color: #f97316;
+  text-transform: uppercase;
+}
+
+.loader-text {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #f1f5f9;
+  white-space: nowrap;
+}

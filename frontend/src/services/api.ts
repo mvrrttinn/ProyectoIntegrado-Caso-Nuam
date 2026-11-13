@@ -12,13 +12,42 @@ import type {
   UploadResponseError
 } from '../types';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://proyectointegrado-caso-nuam.onrender.com/api/v1';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://proyectointegrado-caso-Nuam.onrender.com/api/v1';
+
+type LoadingCallback = (isLoading: boolean, mensaje?: string) => void;
 
 class ApiClient {
   private token: string | null = null;
+  private loadingListeners: Set<LoadingCallback> = new Set();
+  private activeCount = 0;
 
   constructor() {
     this.token = localStorage.getItem('nuam_jwt_token');
+  }
+
+  public onLoading(callback: LoadingCallback) {
+    this.loadingListeners.add(callback);
+    return () => {
+      this.loadingListeners.delete(callback);
+    };
+  }
+
+  public notifyLoading(isLoading: boolean, mensaje?: string) {
+    this.loadingListeners.forEach((fn) => fn(isLoading, mensaje));
+  }
+
+  private async fetchWithLoader(url: string, options?: RequestInit, mensaje?: string): Promise<Response> {
+    this.activeCount++;
+    this.notifyLoading(true, mensaje || 'Sincronizando con la nube nuam...');
+    try {
+      return await fetch(url, options);
+    } finally {
+      this.activeCount--;
+      if (this.activeCount <= 0) {
+        this.activeCount = 0;
+        this.notifyLoading(false);
+      }
+    }
   }
 
   public setToken(token: string | null) {
@@ -59,17 +88,21 @@ class ApiClient {
   ): Promise<{ token: string; usuario: UsuarioAutenticado }> {
     let res: Response;
     try {
-      res = await fetch(`${API_BASE_URL}/auth/login/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          identificador,
-          password,
-          codigo_mfa: codigoMfa,
-          rol: rol || '',
-          token_otp_generado: tokenOtpGenerado || ''
-        })
-      });
+      res = await this.fetchWithLoader(
+        `${API_BASE_URL}/auth/login/`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            identificador,
+            password,
+            codigo_mfa: codigoMfa,
+            rol: rol || '',
+            token_otp_generado: tokenOtpGenerado || ''
+          })
+        },
+        'Verificando credenciales y firma digital...'
+      );
     } catch {
       throw new Error('No se pudo establecer conexión con el servidor. Verifique su conexión a internet o intente en unos momentos.');
     }
@@ -107,9 +140,11 @@ class ApiClient {
 
   // --- Dashboard ---
   async getDashboardStats(): Promise<DashboardStats> {
-    const res = await fetch(`${API_BASE_URL}/dashboard/stats/`, {
-      headers: this.getHeaders()
-    });
+    const res = await this.fetchWithLoader(
+      `${API_BASE_URL}/dashboard/stats/`,
+      { headers: this.getHeaders() },
+      'Actualizando métricas operacionales del Dashboard...'
+    );
     if (!res.ok) {
       throw new Error('Error al obtener estadísticas del dashboard.');
     }
@@ -124,7 +159,11 @@ class ApiClient {
     if (params?.search) query.append('search', params.search);
 
     const url = `${API_BASE_URL}/certificados/${query.toString() ? `?${query.toString()}` : ''}`;
-    const res = await fetch(url, { headers: this.getHeaders() });
+    const res = await this.fetchWithLoader(
+      url,
+      { headers: this.getHeaders() },
+      'Consultando repositorio en Supabase PostgreSQL...'
+    );
     if (!res.ok) {
       throw new Error('Error al consultar el repositorio de certificados.');
     }
@@ -133,10 +172,14 @@ class ApiClient {
 
   // --- Cierre de Lote Fiscal (CU-05) ---
   async cerrarLoteFiscal(folio: string): Promise<{ status: string; mensaje: string; nuevo_estado: string }> {
-    const res = await fetch(`${API_BASE_URL}/certificados/${encodeURIComponent(folio)}/cerrar/`, {
-      method: 'POST',
-      headers: this.getHeaders()
-    });
+    const res = await this.fetchWithLoader(
+      `${API_BASE_URL}/certificados/${encodeURIComponent(folio)}/cerrar/`,
+      {
+        method: 'POST',
+        headers: this.getHeaders()
+      },
+      `Aprobando y cerrando lote fiscal ${folio}...`
+    );
 
     const data = await res.json();
     if (!res.ok) {
@@ -151,10 +194,14 @@ class ApiClient {
 
   // --- Eliminación y Limpieza de Certificados (Admin) ---
   async deleteCertificado(folio: string): Promise<{ status: string; mensaje: string }> {
-    const res = await fetch(`${API_BASE_URL}/certificados/${encodeURIComponent(folio)}/`, {
-      method: 'DELETE',
-      headers: this.getHeaders()
-    });
+    const res = await this.fetchWithLoader(
+      `${API_BASE_URL}/certificados/${encodeURIComponent(folio)}/`,
+      {
+        method: 'DELETE',
+        headers: this.getHeaders()
+      },
+      `Eliminando certificado ${folio} y sus factores...`
+    );
     const data = await res.json();
     if (!res.ok) {
       throw new Error(data.mensaje || data.error || 'Error al eliminar el certificado.');
@@ -163,10 +210,14 @@ class ApiClient {
   }
 
   async limpiarLotesPrueba(): Promise<{ status: string; mensaje: string; registros_eliminados: number }> {
-    const res = await fetch(`${API_BASE_URL}/certificados/limpiar-pruebas/`, {
-      method: 'POST',
-      headers: this.getHeaders()
-    });
+    const res = await this.fetchWithLoader(
+      `${API_BASE_URL}/certificados/limpiar-pruebas/`,
+      {
+        method: 'POST',
+        headers: this.getHeaders()
+      },
+      'Purgando lotes de prueba y restableciendo base...'
+    );
     const data = await res.json();
     if (!res.ok) {
       throw new Error(data.mensaje || data.error || 'Error al limpiar los lotes de prueba.');
@@ -179,19 +230,27 @@ class ApiClient {
     let res: Response;
 
     if (typeof archivo === 'string') {
-      res = await fetch(`${API_BASE_URL}/dividendos/upload/`, {
-        method: 'POST',
-        headers: this.getHeaders(),
-        body: JSON.stringify({ contenido_csv: archivo })
-      });
+      res = await this.fetchWithLoader(
+        `${API_BASE_URL}/dividendos/upload/`,
+        {
+          method: 'POST',
+          headers: this.getHeaders(),
+          body: JSON.stringify({ contenido_csv: archivo })
+        },
+        'Ingestando nómina masiva y validando DJ 1949...'
+      );
     } else {
       const formData = new FormData();
       formData.append('archivo_csv', archivo);
-      res = await fetch(`${API_BASE_URL}/dividendos/upload/`, {
-        method: 'POST',
-        headers: this.getHeaders(true),
-        body: formData
-      });
+      res = await this.fetchWithLoader(
+        `${API_BASE_URL}/dividendos/upload/`,
+        {
+          method: 'POST',
+          headers: this.getHeaders(true),
+          body: formData
+        },
+        'Cargando archivo CSV y validando compuertas BPMN...'
+      );
     }
 
     const data = await res.json();
@@ -203,9 +262,11 @@ class ApiClient {
 
   // --- Auditoría con SHA-256 (CU-06) ---
   async getAuditoria(): Promise<LogAuditoriaItem[]> {
-    const res = await fetch(`${API_BASE_URL}/auditoria/`, {
-      headers: this.getHeaders()
-    });
+    const res = await this.fetchWithLoader(
+      `${API_BASE_URL}/auditoria/`,
+      { headers: this.getHeaders() },
+      'Verificando firmas de la bitácora inmutable...'
+    );
     if (!res.ok) {
       throw new Error('Error al consultar la bitácora de auditoría.');
     }
@@ -214,9 +275,11 @@ class ApiClient {
 
   // --- Gestión de Usuarios y Roles (CU-07) ---
   async getUsuarios(): Promise<any[]> {
-    const res = await fetch(`${API_BASE_URL}/usuarios/`, {
-      headers: this.getHeaders()
-    });
+    const res = await this.fetchWithLoader(
+      `${API_BASE_URL}/usuarios/`,
+      { headers: this.getHeaders() },
+      'Cargando directorio de usuarios RBAC...'
+    );
     if (!res.ok) {
       throw new Error('Error al consultar usuarios (se requiere perfil Administrador).');
     }
@@ -224,9 +287,11 @@ class ApiClient {
   }
 
   async getRoles(): Promise<any[]> {
-    const res = await fetch(`${API_BASE_URL}/roles/`, {
-      headers: this.getHeaders()
-    });
+    const res = await this.fetchWithLoader(
+      `${API_BASE_URL}/roles/`,
+      { headers: this.getHeaders() },
+      'Consultando catálogo de roles...'
+    );
     if (!res.ok) {
       throw new Error('Error al consultar roles.');
     }
@@ -238,11 +303,15 @@ class ApiClient {
   }
 
   async updateUsuario(idUsuario: number, data: any): Promise<any> {
-    const res = await fetch(`${API_BASE_URL}/usuarios/${idUsuario}/`, {
-      method: 'PATCH',
-      headers: this.getHeaders(),
-      body: JSON.stringify(data)
-    });
+    const res = await this.fetchWithLoader(
+      `${API_BASE_URL}/usuarios/${idUsuario}/`,
+      {
+        method: 'PATCH',
+        headers: this.getHeaders(),
+        body: JSON.stringify(data)
+      },
+      'Guardando cambios de perfil y emitiendo firma SHA-256...'
+    );
     if (!res.ok) {
       const err = await res.json();
       throw new Error(err.error || err.mensaje || 'Error al actualizar usuario.');
@@ -251,11 +320,15 @@ class ApiClient {
   }
 
   async crearUsuario(usuarioData: any): Promise<any> {
-    const res = await fetch(`${API_BASE_URL}/usuarios/`, {
-      method: 'POST',
-      headers: this.getHeaders(),
-      body: JSON.stringify(usuarioData)
-    });
+    const res = await this.fetchWithLoader(
+      `${API_BASE_URL}/usuarios/`,
+      {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify(usuarioData)
+      },
+      'Registrando nuevo usuario en Supabase...'
+    );
     if (!res.ok) {
       const err = await res.json();
       throw new Error(err.mensaje || JSON.stringify(err) || 'Error al crear usuario.');
@@ -264,10 +337,14 @@ class ApiClient {
   }
 
   async deleteUsuario(idUsuario: number): Promise<{ status: string; mensaje: string }> {
-    const res = await fetch(`${API_BASE_URL}/usuarios/${idUsuario}/`, {
-      method: 'DELETE',
-      headers: this.getHeaders()
-    });
+    const res = await this.fetchWithLoader(
+      `${API_BASE_URL}/usuarios/${idUsuario}/`,
+      {
+        method: 'DELETE',
+        headers: this.getHeaders()
+      },
+      'Eliminando usuario de la base de datos...'
+    );
     const data = await res.json();
     if (!res.ok) {
       throw new Error(data.mensaje || data.error || 'Error al eliminar usuario.');

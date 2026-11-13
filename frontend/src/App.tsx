@@ -10,13 +10,20 @@ import { UploadCsvView } from './components/UploadCsvView';
 import { RepositoryView } from './components/RepositoryView';
 import { AuditLogView } from './components/AuditLogView';
 import { RbacAdminView } from './components/RbacAdminView';
+import { FloatingLoader } from './components/FloatingLoader';
 import './App.css';
 
 export function App() {
   const [usuario, setUsuario] = useState<UsuarioAutenticado | null>(null);
   const [currentView, setCurrentView] = useState<NavView>('dashboard');
+  const [loadingInfo, setLoadingInfo] = useState<{ loading: boolean; mensaje?: string }>({ loading: false });
 
   useEffect(() => {
+    // Suscripción al monitor global de llamadas en vuelo
+    const unsubscribe = api.onLoading((isLoading, mensaje) => {
+      setLoadingInfo({ loading: isLoading, mensaje });
+    });
+
     // Si existe token previo, restaurar sesión de demostración
     const savedToken = api.getToken();
     const savedUser = localStorage.getItem('nuam_user');
@@ -27,6 +34,8 @@ export function App() {
         api.logout();
       }
     }
+
+    return () => unsubscribe();
   }, []);
 
   const handleLoginSuccess = (user: UsuarioAutenticado) => {
@@ -42,51 +51,55 @@ export function App() {
     setCurrentView('dashboard');
   };
 
-  if (!usuario) {
-    return <LoginView onLoginSuccess={handleLoginSuccess} />;
-  }
-
   return (
-    <div className="nuam-app-layout">
-      <Navbar usuario={usuario} onLogout={handleLogout} />
-      
-      <div className="nuam-main-body">
-        <Sidebar
-          currentView={currentView}
-          onSelectView={setCurrentView}
-          usuario={usuario}
-        />
+    <>
+      {loadingInfo.loading && <FloatingLoader mensaje={loadingInfo.mensaje} />}
 
-        <main className="nuam-content-area">
-          {currentView === 'dashboard' && (
-            <DashboardView
+      {!usuario ? (
+        <LoginView onLoginSuccess={handleLoginSuccess} />
+      ) : (
+        <div className="nuam-app-layout">
+          <Navbar usuario={usuario} onLogout={handleLogout} />
+          
+          <div className="nuam-main-body">
+            <Sidebar
+              currentView={currentView}
+              onSelectView={setCurrentView}
               usuario={usuario}
-              onNavigateToUpload={() => setCurrentView('upload')}
-              onNavigateToRepository={() => setCurrentView('repository')}
             />
-          )}
 
-          {currentView === 'upload' && (
-            <UploadCsvView
-              usuario={usuario}
-              onSuccess={() => setCurrentView('dashboard')}
-            />
-          )}
+            <main className="nuam-content-area">
+              {currentView === 'dashboard' && (
+                <DashboardView
+                  usuario={usuario}
+                  onNavigateToUpload={() => setCurrentView('upload')}
+                  onNavigateToRepository={() => setCurrentView('repository')}
+                />
+              )}
 
-          {currentView === 'repository' && (
-            <RepositoryView usuario={usuario} />
-          )}
+              {currentView === 'upload' && (
+                <UploadCsvView
+                  usuario={usuario}
+                  onSuccess={() => setCurrentView('dashboard')}
+                />
+              )}
 
-          {currentView === 'audit' && (
-            <AuditLogView />
-          )}
+              {currentView === 'repository' && (
+                <RepositoryView usuario={usuario} />
+              )}
 
-          {currentView === 'rbac' && usuario.rol === 'Administrador Plataforma' && (
-            <RbacAdminView />
-          )}
-        </main>
-      </div>
-    </div>
+              {currentView === 'audit' && (
+                <AuditLogView />
+              )}
+
+              {currentView === 'rbac' && usuario.rol === 'Administrador Plataforma' && (
+                <RbacAdminView />
+              )}
+            </main>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
