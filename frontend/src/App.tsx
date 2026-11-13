@@ -17,6 +17,7 @@ export function App() {
   const [usuario, setUsuario] = useState<UsuarioAutenticado | null>(null);
   const [currentView, setCurrentView] = useState<NavView>('dashboard');
   const [loadingInfo, setLoadingInfo] = useState<{ loading: boolean; mensaje?: string }>({ loading: false });
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     // Suscripción al monitor global de llamadas en vuelo
@@ -59,13 +60,20 @@ export function App() {
         <LoginView onLoginSuccess={handleLoginSuccess} />
       ) : (
         <div className="nuam-app-layout">
-          <Navbar usuario={usuario} onLogout={handleLogout} />
+          <Navbar
+            usuario={usuario}
+            onLogout={handleLogout}
+            onToggleMobileMenu={() => setMobileMenuOpen(prev => !prev)}
+            isMobileMenuOpen={mobileMenuOpen}
+          />
           
           <div className="nuam-main-body">
             <Sidebar
               currentView={currentView}
               onSelectView={setCurrentView}
               usuario={usuario}
+              isMobileOpen={mobileMenuOpen}
+              onCloseMobile={() => setMobileMenuOpen(false)}
             />
 
             <main className="nuam-content-area">

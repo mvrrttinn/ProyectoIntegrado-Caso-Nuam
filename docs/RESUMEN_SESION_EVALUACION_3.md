@@ -103,6 +103,12 @@ Para evitar la sensación de congelamiento o incertidumbre en la pantalla durant
 * **Intercepción Reactiva Global:** Integrado a través del cliente API (`fetchWithLoader`), mostrando mensajes contextuales claros en español según la acción en curso (*"Eliminando lote fiscal...", "Ingestando nómina masiva...", "Guardando cambios de perfil...", etc.*).
 * **Iconografía SVG y Alineación:** Reemplazo de emojis genéricos por botones vectoriales SVG (`.btn-icon-delete`) con alineación en línea fija (`.table-actions-cell`), impidiendo quiebres visuales de línea en tablas tanto en el Dashboard como en el Repositorio y RBAC.
 
+### 3.9. Diseño Responsivo Mobile y Limpieza Visual Institucional
+* **Limpieza de Nomenclatura Académica:** Se eliminaron todas las etiquetas tipo `(CU-01)`, `(CU-04)`, `(CU-06)`, `(CU-07)` de los títulos, botones y tablas de la interfaz de usuario, sustituyéndolas por títulos corporativos formales (*"Gobernanza de Accesos y Control de Seguridad RBAC"*, *"Repositorio Histórico Multianual"*, *"Bitácora Inmutable de Auditoría Criptográfica"*, etc.).
+* **Menú Hamburguesa Móvil (☰):** En dispositivos móviles ($\le 768px$), aparece un botón hamburguesa en la barra superior que despliega el menú lateral como un cajón *off-canvas* con telón oscuro (*backdrop*). Se cierra automáticamente al seleccionar un módulo o tocar fuera.
+* **Métricas y Tablas Adaptativas:** Las tarjetas KPI se reorganizan de 4 columnas a 2 en tablets y 1 columna en smartphones. Las tablas cuentan con deslizamiento táctil horizontal ininterrumpido sin desbordar el viewport del teléfono.
+* **Preservación Total del Escritorio:** Toda la vista de escritorio ($> 1024px$) permanece 100% idéntica sin ninguna modificación estructural.
+
 ---
 
 ## 💻 4. Guía para Continuar Trabajando desde Casa

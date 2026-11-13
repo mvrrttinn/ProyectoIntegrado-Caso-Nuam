@@ -267,7 +267,7 @@ export const RbacAdminView: React.FC = () => {
     <div className="rbac-view-container">
       <div className="view-header">
         <div>
-          <h2 className="view-title">Gobernanza de Accesos y Seguridad RBAC (CU-07)</h2>
+          <h2 className="view-title">Gobernanza de Accesos y Control de Seguridad RBAC</h2>
           <p className="view-subtitle">
             Administración completa de usuarios: edición de nombres, correos, roles institucionales y contraseñas (ISO/IEC 27001).
           </p>
@@ -308,37 +308,37 @@ export const RbacAdminView: React.FC = () => {
             </thead>
             <tbody>
               <tr>
-                <td><strong>CU-01: Ingesta Masiva CSV</strong></td>
+                <td><strong>Ingesta Masiva de Dividendos</strong></td>
                 <td className="text-center text-success">✅ Autorizado</td>
                 <td className="text-center text-danger">🔒 Bloqueado (HTTP 403)</td>
                 <td className="text-center text-success">✅ Autorizado</td>
               </tr>
               <tr>
-                <td><strong>CU-02 & CU-03: Motor DJ 1949 (6 decimales)</strong></td>
+                <td><strong>Motor de Calificación Tributaria (DJ 1949 / 6 dec.)</strong></td>
                 <td className="text-center text-success">✅ Ejecución</td>
                 <td className="text-center text-muted">👁️ Consulta</td>
                 <td className="text-center text-success">✅ Ejecución</td>
               </tr>
               <tr>
-                <td><strong>CU-04: Repositorio Multianual</strong></td>
+                <td><strong>Repositorio Multianual Regional</strong></td>
                 <td className="text-center text-success">✅ Consulta Institucional</td>
                 <td className="text-center text-success">✅ Consulta Regional Total</td>
                 <td className="text-center text-success">✅ Consulta Total</td>
               </tr>
               <tr>
-                <td><strong>CU-05: Aprobación y Cierre de Lote Fiscal</strong></td>
+                <td><strong>Aprobación y Cierre de Lote Fiscal</strong></td>
                 <td className="text-center text-danger font-bold">❌ Bloqueado (HTTP 403)</td>
                 <td className="text-center text-success font-bold">✅ Exclusivo con Firma</td>
                 <td className="text-center text-success">✅ Autorizado</td>
               </tr>
               <tr>
-                <td><strong>CU-06: Bitácora Inmutable SHA-256</strong></td>
+                <td><strong>Bitácora Inmutable Criptográfica SHA-256</strong></td>
                 <td className="text-center text-muted">👁️ Lectura Limitada</td>
                 <td className="text-center text-success">✅ Auditoría Criptográfica</td>
                 <td className="text-center text-success">✅ Control Total</td>
               </tr>
               <tr>
-                <td><strong>CU-07: Gestión de Usuarios y Roles</strong></td>
+                <td><strong>Gestión y Directorio de Usuarios Institucionales</strong></td>
                 <td className="text-center text-danger">❌ Bloqueado</td>
                 <td className="text-center text-danger">❌ Bloqueado</td>
                 <td className="text-center text-success font-bold">👑 Exclusivo Admin</td>

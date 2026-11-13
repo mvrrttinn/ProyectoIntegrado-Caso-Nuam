@@ -86,7 +86,7 @@ LT-2026-0048,97.004.000-5,2026,2000000000.00`;
     <div className="upload-view-container">
       <div className="view-header">
         <div>
-          <h2 className="view-title">Carga Masiva de Dividendos (CU-01)</h2>
+          <h2 className="view-title">Carga Masiva de Nóminas y Dividendos</h2>
           <p className="view-subtitle">
             Ingesta automatizada de nóminas tributarias con compuertas de decisión BPMN 2.0 y firma criptográfica SHA-256.
           </p>

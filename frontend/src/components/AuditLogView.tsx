@@ -35,7 +35,7 @@ export const AuditLogView: React.FC = () => {
     <div className="audit-view-container">
       <div className="view-header">
         <div>
-          <h2 className="view-title">Bitácora Inmutable de Auditoría (CU-06)</h2>
+          <h2 className="view-title">Bitácora Inmutable de Auditoría Criptográfica</h2>
           <p className="view-subtitle">
             Trazabilidad criptográfica con hashes SHA-256, no repudio y persistencia híbrida (PostgreSQL + MongoDB Atlas).
           </p>

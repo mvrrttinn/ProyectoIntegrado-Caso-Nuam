@@ -175,7 +175,7 @@ export const RepositoryView: React.FC<RepositoryViewProps> = ({ usuario }) => {
     <div className="repository-view-container">
       <div className="view-header">
         <div>
-          <h2 className="view-title">Repositorio Histórico Multianual (CU-04)</h2>
+          <h2 className="view-title">Repositorio Histórico Multianual</h2>
           <p className="view-subtitle">
             Consulta y auditoría de certificados tributarios con trazabilidad a 6 decimales para DJ 1949 / DJ 1922.
           </p>
@@ -318,7 +318,7 @@ export const RepositoryView: React.FC<RepositoryViewProps> = ({ usuario }) => {
                               type="button"
                               className={`btn-action-close ${!esAuditor ? 'btn-restricted' : ''}`}
                               onClick={() => handleCerrarLote(cert.folio_certificado)}
-                              title={esAuditor ? "Aprobar y Cerrar Lote Fiscal (CU-05)" : "Acción reservada exclusivamente para Auditor nuam"}
+                              title={esAuditor ? "Aprobar y Cerrar Lote Fiscal" : "Acción reservada exclusivamente para Auditor nuam"}
                             >
                               {esAuditor ? 'Aprobar y Cerrar' : '🔒 Requiere Auditor'}
                             </button>
