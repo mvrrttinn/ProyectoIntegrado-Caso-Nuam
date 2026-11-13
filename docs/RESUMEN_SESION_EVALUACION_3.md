@@ -109,6 +109,11 @@ Para evitar la sensación de congelamiento o incertidumbre en la pantalla durant
 * **Métricas y Tablas Adaptativas:** Las tarjetas KPI se reorganizan de 4 columnas a 2 en tablets y 1 columna en smartphones. Las tablas cuentan con deslizamiento táctil horizontal ininterrumpido sin desbordar el viewport del teléfono.
 * **Preservación Total del Escritorio:** Toda la vista de escritorio ($> 1024px$) permanece 100% idéntica sin ninguna modificación estructural.
 
+### 3.10. Formato Automático de RUT Chileno y Validación Módulo 11
+* **Auto-completado en Tiempo Real:** Al ingresar el RUT en el formulario de creación de usuarios, el usuario solo debe teclear los números (sin preocuparse por puntos ni guiones). El sistema formatea automáticamente el texto en vivo a `XX.XXX.XXX-X`.
+* **Validación Algorítmica Módulo 11:** Verificación instantánea del dígito verificador. Si es correcto, muestra un sello verde `✅ RUT válido (Módulo 11 CMF)`; si el dígito no corresponde a la fórmula bancaria, advierte al operador con `⚠️ Dígito verificador no coincide`.
+* **Normalización en Backend y Login:** El backend normaliza de forma canónica cualquier RUT recibido antes de persistirlo en Supabase PostgreSQL y permite que en el inicio de sesión (`LoginView`) los usuarios puedan ingresar su RUT con o sin puntos ni guiones de forma indistinta.
+
 ---
 
 ## 💻 4. Guía para Continuar Trabajando desde Casa

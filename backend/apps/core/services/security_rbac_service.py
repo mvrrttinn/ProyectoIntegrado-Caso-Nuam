@@ -83,6 +83,21 @@ class SecurityRBACService:
 
         return clean in codigos_autorizados
 
+    @staticmethod
+    def normalizar_rut(rut_str: str) -> str:
+        """Convierte cualquier RUT (con o sin puntos/guion) al formato estándar institucional XX.XXX.XXX-X."""
+        if not rut_str:
+            return ""
+        limpio = rut_str.replace(".", "").replace("-", "").strip().upper()
+        if len(limpio) >= 2:
+            cuerpo = limpio[:-1]
+            dv = limpio[-1]
+            cuerpo_rev = cuerpo[::-1]
+            partes = [cuerpo_rev[i:i+3] for i in range(0, len(cuerpo_rev), 3)]
+            cuerpo_con_puntos = ".".join(partes)[::-1]
+            return f"{cuerpo_con_puntos}-{dv}"
+        return rut_str
+
     @classmethod
     def autenticar_usuario(cls, identificador: str, password: str, codigo_mfa: str, token_otp_esperado: str = None) -> Tuple[Usuario, str]:
         """
@@ -90,6 +105,7 @@ class SecurityRBACService:
         Incluye auto-recuperación y sembrado en caso de reinicio de contenedor cloud.
         """
         identificador = identificador.strip()
+        rut_normalizado = cls.normalizar_rut(identificador)
 
         # Si no existen usuarios (ej. contenedor recién iniciado en Render), asegurar sembrado
         if not Usuario.objects.exists():
@@ -103,6 +119,8 @@ class SecurityRBACService:
             email__iexact=identificador
         ).first() or Usuario.objects.filter(
             rut__iexact=identificador
+        ).first() or Usuario.objects.filter(
+            rut__iexact=rut_normalizado
         ).first()
 
         # Mecanismo de contingencia para el Administrador Global (RUT 11.222.333-4)

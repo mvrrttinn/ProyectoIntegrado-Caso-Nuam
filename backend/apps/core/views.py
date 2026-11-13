@@ -420,7 +420,11 @@ class UsuariosListCreateView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
-        serializer = UsuarioSerializer(data=request.data)
+        payload = request.data.copy() if hasattr(request.data, 'copy') else dict(request.data)
+        if 'rut' in payload and payload['rut']:
+            payload['rut'] = SecurityRBACService.normalizar_rut(str(payload['rut']))
+
+        serializer = UsuarioSerializer(data=payload)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

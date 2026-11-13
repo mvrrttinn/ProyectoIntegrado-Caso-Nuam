@@ -10,6 +10,32 @@ interface PasswordPolicyStatus {
   esValida: boolean;
 }
 
+const formatearRutChileno = (valor: string): string => {
+  const limpio = valor.replace(/[^0-9kK]/g, '').toUpperCase().slice(0, 9);
+  if (!limpio) return '';
+  if (limpio.length === 1) return limpio;
+  const cuerpo = limpio.slice(0, -1);
+  const dv = limpio.slice(-1);
+  const cuerpoConPuntos = cuerpo.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  return `${cuerpoConPuntos}-${dv}`;
+};
+
+const validarRutChileno = (rut: string): boolean => {
+  const limpio = rut.replace(/[^0-9kK]/g, '').toUpperCase();
+  if (limpio.length < 8) return false;
+  const cuerpo = limpio.slice(0, -1);
+  const dv = limpio.slice(-1);
+  let suma = 0;
+  let multiplo = 2;
+  for (let i = cuerpo.length - 1; i >= 0; i--) {
+    suma += parseInt(cuerpo[i], 10) * multiplo;
+    multiplo = multiplo === 7 ? 2 : multiplo + 1;
+  }
+  const esperado = 11 - (suma % 11);
+  const dvCalc = esperado === 10 ? 'K' : esperado === 11 ? '0' : esperado.toString();
+  return dv === dvCalc;
+};
+
 const TrashIcon = () => (
   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <path d="M3 6h18" />
@@ -582,16 +608,28 @@ export const RbacAdminView: React.FC = () => {
 
                 <div className="form-row mb-4">
                   <div className="form-group flex-1">
-                    <label htmlFor="modal-rut">RUT:</label>
+                    <label htmlFor="modal-rut">RUT Fiscal:</label>
                     <input
                       id="modal-rut"
                       type="text"
-                      className="form-input"
+                      className="form-input font-mono"
                       value={nuevoRut}
-                      onChange={(e) => setNuevoRut(e.target.value)}
-                      placeholder="15.678.901-2"
+                      onChange={(e) => setNuevoRut(formatearRutChileno(e.target.value))}
+                      placeholder="Ej: 156789012 (auto-formato)"
+                      maxLength={12}
                       required
                     />
+                    {nuevoRut && (
+                      <div className="mt-1" style={{ fontSize: '0.75rem' }}>
+                        {validarRutChileno(nuevoRut) ? (
+                          <span className="text-success font-semibold">✅ RUT válido (Módulo 11 CMF)</span>
+                        ) : nuevoRut.replace(/[^0-9kK]/g, '').length >= 8 ? (
+                          <span className="text-warning">⚠️ Dígito verificador no coincide con Módulo 11</span>
+                        ) : (
+                          <span className="text-muted">Escriba los números sin puntos ni guion</span>
+                        )}
+                      </div>
+                    )}
                   </div>
                   <div className="form-group flex-2">
                     <label htmlFor="modal-email">Correo Institucional:</label>
