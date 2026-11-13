@@ -22,8 +22,16 @@ else:
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-nuam-caso-integrado-evaluacion-3-super-secret-key-2026')
 DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
-allowed_hosts_raw = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1,testserver')
-ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_raw.split(',') if host.strip()]
+allowed_hosts_raw = os.getenv('ALLOWED_HOSTS', '*')
+if allowed_hosts_raw == '*':
+    ALLOWED_HOSTS = ['*']
+else:
+    ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_raw.split(',') if host.strip()]
+
+# Garantizar soporte para dominios de Render, Vercel y locales
+for domain in ['.onrender.com', 'proyectointegrado-caso-nuam.onrender.com', 'localhost', '127.0.0.1', 'testserver']:
+    if domain not in ALLOWED_HOSTS and '*' not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(domain)
 
 # Application definition
 INSTALLED_APPS = [
@@ -128,13 +136,21 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # ==============================================================================
-# CONFIGURACIÓN CORS HEADERS
+# CONFIGURACIÓN CORS HEADERS & CSRF
 # ==============================================================================
-cors_origins_raw = os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000')
+cors_origins_raw = os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,https://proyecto-integrado-caso-nuam.vercel.app')
 CORS_ALLOWED_ORIGINS = [origin.strip() for origin in cors_origins_raw.split(',') if origin.strip()]
 CORS_ALLOW_CREDENTIALS = True
-if DEBUG:
-    CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_ALL_ORIGINS = True  # Habilitado para comunicación abierta Frontend (Vercel) <-> Backend (Render)
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://proyectointegrado-caso-nuam.onrender.com',
+    'https://*.onrender.com',
+    'https://proyecto-integrado-caso-nuam.vercel.app',
+    'https://*.vercel.app',
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+]
 
 # ==============================================================================
 # CONFIGURACIÓN DJANGO REST FRAMEWORK (DRF)
