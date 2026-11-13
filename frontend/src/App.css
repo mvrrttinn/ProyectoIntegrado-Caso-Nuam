@@ -711,6 +711,25 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1.5rem;
+  gap: 1rem;
+}
+
+.card-header-tools,
+.repository-view-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.repository-view-toolbar {
+  justify-content: flex-end;
+  margin-bottom: 1rem;
+}
+
+.repository-view-label {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
 }
 
 .card-title {
@@ -726,14 +745,26 @@
 }
 
 .table-responsive {
+  width: 100%;
+  max-width: 100%;
   overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: thin;
 }
 
 .nuam-table {
-  width: 100%;
+  width: max-content;
+  min-width: 1120px;
   border-collapse: collapse;
   text-align: left;
   font-size: 0.9rem;
+}
+
+.nuam-table th,
+.nuam-table td {
+  white-space: nowrap;
 }
 
 .nuam-table th {
@@ -767,6 +798,158 @@
   padding: 3rem;
   color: var(--text-muted);
   font-size: 0.95rem;
+}
+
+.view-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.2rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+}
+
+.view-toggle-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    color 160ms ease,
+    border-color 160ms ease;
+}
+
+.view-toggle-button:hover,
+.view-toggle-button.is-active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+
+.certificate-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.certificate-card {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.1rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  contain: layout paint;
+  opacity: 0;
+  transform: translate3d(0, 12px, 0);
+  transition:
+    opacity 220ms ease,
+    transform 220ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.certificate-card.is-visible {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+.certificate-card:hover {
+  border-color: var(--color-accent);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+}
+
+.certificate-card-header,
+.certificate-card-footer,
+.certificate-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.certificate-card-header,
+.certificate-card-footer {
+  justify-content: space-between;
+}
+
+.certificate-card-label,
+.certificate-card-data dt {
+  display: block;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.certificate-card-folio {
+  display: block;
+  margin-top: 0.2rem;
+  color: var(--color-accent);
+  font-size: 1rem;
+}
+
+.certificate-card-data {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.certificate-card-data dd {
+  min-width: 0;
+  margin-top: 0.2rem;
+  overflow-wrap: anywhere;
+  color: var(--text-main);
+  font-size: 0.88rem;
+}
+
+.certificate-card-actions {
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.table-skeleton {
+  display: grid;
+  gap: 0.75rem;
+  min-height: 260px;
+}
+
+.table-skeleton-row {
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr 1fr;
+  align-items: center;
+  gap: 1rem;
+  min-height: 42px;
+}
+
+.table-skeleton-row span {
+  display: block;
+  height: 0.85rem;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    var(--bg-card) 25%,
+    var(--bg-card-hover) 50%,
+    var(--bg-card) 75%
+  );
+  background-size: 200% 100%;
+  animation: nuam-skeleton-shimmer 1.4s linear infinite;
+}
+
+@keyframes nuam-skeleton-shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
 }
 
 /* Badges & Pills */
@@ -1438,13 +1621,31 @@
   .nuam-content-area {
     padding: 1.5rem;
   }
+
+  .certificate-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 /* Mobile Screens (<= 768px) */
 @media (max-width: 768px) {
   /* Topbar */
   .nuam-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
     padding: 0.65rem 1rem;
+    transition:
+      background-color 180ms ease,
+      box-shadow 180ms ease,
+      backdrop-filter 180ms ease;
+  }
+
+  .nuam-topbar.is-scrolled {
+    background: rgba(15, 23, 42, 0.88);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
   }
 
   .topbar-left {
@@ -1597,6 +1798,17 @@
     justify-content: center;
   }
 
+  .card-header-flex {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .card-header-tools,
+  .repository-view-toolbar {
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+
   /* Filtros en Repositorio y Vistas */
   .filters-card {
     padding: 1rem;
@@ -1634,7 +1846,7 @@
   }
 
   .nuam-table {
-    min-width: 720px;
+    min-width: 1120px;
   }
 
   /* Notificación Flotante Centrada en Móviles */
@@ -1664,5 +1876,35 @@
 
   .logo-subtext {
     font-size: 0.5rem;
+  }
+
+  .content-card {
+    padding: 1rem;
+  }
+
+  .certificate-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .certificate-card-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nuam-topbar,
+  .certificate-card,
+  .view-toggle-button {
+    transition: none;
+  }
+
+  .certificate-card {
+    opacity: 1;
+    transform: none;
+  }
+
+  .table-skeleton-row span {
+    animation: none;
   }
 }

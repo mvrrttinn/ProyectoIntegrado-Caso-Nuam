@@ -1,6 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import type { CertificadoDividendo, DashboardStats, UsuarioAutenticado } from '../types';
 import { api } from '../services/api';
+import { CertificateCard } from './CertificateCard';
+import { ViewToggle } from './ViewToggle';
+import type { DataViewMode } from './ViewToggle';
+import { getErrorMessage } from '../utils/errorMessage';
 
 interface DashboardViewProps {
   usuario: UsuarioAutenticado;
@@ -26,6 +30,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [lotes, setLotes] = useState<CertificadoDividendo[]>([]);
   const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState<DataViewMode>('list');
   const [loteSeleccionado, setLoteSeleccionado] = useState<CertificadoDividendo | null>(null);
   const [folioAEliminar, setFolioAEliminar] = useState<string | null>(null);
   const [procesandoEliminar, setProcesandoEliminar] = useState(false);
@@ -45,10 +50,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       });
       setFolioAEliminar(null);
       await cargarDatos();
-    } catch (err: any) {
+    } catch (err: unknown) {
       setMensajeNotificacion({
         tipo: 'error',
-        texto: `🛑 ${err.message || 'Error al eliminar el certificado.'}`
+        texto: `🛑 ${getErrorMessage(err, 'Error al eliminar el certificado.')}`
       });
     } finally {
       setProcesandoEliminar(false);
@@ -165,13 +170,52 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               Inspección de factores de proporción tributaria calculados con precisión Decimal (6 dígitos).
             </p>
           </div>
-          <button type="button" className="btn-link" onClick={onNavigateToRepository}>
-            Ver Todos los Registros Multianuales →
-          </button>
+          <div className="card-header-tools">
+            <ViewToggle
+              value={viewMode}
+              onChange={setViewMode}
+              label="Cambiar vista de lotes"
+            />
+            <button type="button" className="btn-link" onClick={onNavigateToRepository}>
+              Ver Todos los Registros Multianuales →
+            </button>
+          </div>
         </div>
 
         {loading ? (
-          <div className="table-loading">Cargando registros transaccionales...</div>
+          <div className="table-skeleton" aria-label="Cargando registros" role="status">
+            {Array.from({ length: 5 }, (_, index) => (
+              <div className="table-skeleton-row" key={index}>
+                <span />
+                <span />
+                <span />
+                <span />
+              </div>
+            ))}
+          </div>
+        ) : viewMode === 'grid' ? (
+          <div className="certificate-grid">
+            {lotes.map((lote) => (
+              <CertificateCard
+                key={lote.folio_certificado}
+                certificado={lote}
+                montoFormateado={formatMonto(lote.monto_total_bruto)}
+                onInspect={() => setLoteSeleccionado(lote)}
+              >
+                {puedeEliminar && (
+                  <button
+                    type="button"
+                    className="btn-icon-delete"
+                    onClick={() => setFolioAEliminar(lote.folio_certificado)}
+                    title={`Eliminar certificado ${lote.folio_certificado} y sus factores`}
+                    aria-label={`Eliminar certificado ${lote.folio_certificado}`}
+                  >
+                    <TrashIcon />
+                  </button>
+                )}
+              </CertificateCard>
+            ))}
+          </div>
         ) : (
           <div className="table-responsive">
             <table className="nuam-table">

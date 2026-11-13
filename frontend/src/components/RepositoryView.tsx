@@ -1,6 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import type { CertificadoDividendo, UsuarioAutenticado } from '../types';
 import { api } from '../services/api';
+import { CertificateCard } from './CertificateCard';
+import { ViewToggle } from './ViewToggle';
+import type { DataViewMode } from './ViewToggle';
+import { getErrorMessage } from '../utils/errorMessage';
 
 interface RepositoryViewProps {
   usuario: UsuarioAutenticado;
@@ -19,43 +23,55 @@ const TrashIcon = () => (
 export const RepositoryView: React.FC<RepositoryViewProps> = ({ usuario }) => {
   const [certificados, setCertificados] = useState<CertificadoDividendo[]>([]);
   const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState<DataViewMode>('list');
   const [search, setSearch] = useState('');
   const [filtroAnio, setFiltroAnio] = useState<string>('todos');
   const [filtroEstado, setFiltroEstado] = useState<string>('todos');
   const [mensajeAccion, setMensajeAccion] = useState<{ tipo: 'success' | 'error'; texto: string } | null>(null);
+  const searchRef = useRef(search);
 
   // Estados de eliminación y limpieza
   const [folioAEliminar, setFolioAEliminar] = useState<string | null>(null);
   const [mostrarModalLimpieza, setMostrarModalLimpieza] = useState(false);
   const [procesandoEliminar, setProcesandoEliminar] = useState(false);
+  const [certificadoSeleccionado, setCertificadoSeleccionado] =
+    useState<CertificadoDividendo | null>(null);
 
   const esAuditor = usuario.rol === 'Auditor nuam' || usuario.rol === 'Administrador Plataforma';
   const puedeEliminar = usuario.rol === 'Administrador Plataforma' || usuario.rol === 'Auditor nuam';
 
-  const cargarCertificados = async () => {
+  useEffect(() => {
+    searchRef.current = search;
+  }, [search]);
+
+  const cargarCertificados = useCallback(async () => {
     setLoading(true);
     setMensajeAccion(null);
     try {
       const data = await api.getCertificados({
         anio: filtroAnio !== 'todos' ? Number(filtroAnio) : undefined,
         estado: filtroEstado !== 'todos' ? filtroEstado : undefined,
-        search: search.trim() || undefined
+        search: searchRef.current.trim() || undefined
       });
       setCertificados(data);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error cargando certificados:', err);
     } finally {
       setLoading(false);
     }
-  };
+  }, [filtroAnio, filtroEstado]);
 
   useEffect(() => {
-    cargarCertificados();
-  }, [filtroAnio, filtroEstado]);
+    const timeoutId = window.setTimeout(() => {
+      void cargarCertificados();
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [cargarCertificados]);
 
   const handleBuscar = (e: React.FormEvent) => {
     e.preventDefault();
-    cargarCertificados();
+    void cargarCertificados();
   };
 
   const handleCerrarLote = async (folio: string) => {
@@ -74,10 +90,10 @@ export const RepositoryView: React.FC<RepositoryViewProps> = ({ usuario }) => {
         texto: `✅ ${resp.mensaje || `Lote ${folio} cerrado exitosamente.`}`
       });
       cargarCertificados();
-    } catch (err: any) {
+    } catch (err: unknown) {
       setMensajeAccion({
         tipo: 'error',
-        texto: err.message || 'Error al ejecutar cierre de lote fiscal.'
+        texto: getErrorMessage(err, 'Error al ejecutar cierre de lote fiscal.')
       });
     }
   };
@@ -93,10 +109,10 @@ export const RepositoryView: React.FC<RepositoryViewProps> = ({ usuario }) => {
       });
       setFolioAEliminar(null);
       cargarCertificados();
-    } catch (err: any) {
+    } catch (err: unknown) {
       setMensajeAccion({
         tipo: 'error',
-        texto: err.message || 'Error al eliminar el certificado.'
+        texto: getErrorMessage(err, 'Error al eliminar el certificado.')
       });
     } finally {
       setProcesandoEliminar(false);
@@ -113,10 +129,10 @@ export const RepositoryView: React.FC<RepositoryViewProps> = ({ usuario }) => {
       });
       setMostrarModalLimpieza(false);
       cargarCertificados();
-    } catch (err: any) {
+    } catch (err: unknown) {
       setMensajeAccion({
         tipo: 'error',
-        texto: err.message || 'Error al limpiar los lotes de prueba.'
+        texto: getErrorMessage(err, 'Error al limpiar los lotes de prueba.')
       });
     } finally {
       setProcesandoEliminar(false);
@@ -170,6 +186,13 @@ export const RepositoryView: React.FC<RepositoryViewProps> = ({ usuario }) => {
     link.click();
     document.body.removeChild(link);
   };
+
+  const formatMonto = (monto: string) => (
+    new Intl.NumberFormat('es-CL', {
+      style: 'currency',
+      currency: 'CLP'
+    }).format(Number(monto))
+  );
 
   return (
     <div className="repository-view-container">
@@ -259,10 +282,72 @@ export const RepositoryView: React.FC<RepositoryViewProps> = ({ usuario }) => {
 
       {/* Tabla del Repositorio */}
       <div className="content-card">
+        <div className="repository-view-toolbar">
+          <span className="repository-view-label">Modo de visualización</span>
+          <ViewToggle
+            value={viewMode}
+            onChange={setViewMode}
+            label="Cambiar vista del repositorio"
+          />
+        </div>
+
         {loading ? (
-          <div className="table-loading">Consultando repositorio de Supabase PostgreSQL...</div>
+          <div className="table-skeleton" aria-label="Cargando repositorio" role="status">
+            {Array.from({ length: 5 }, (_, index) => (
+              <div className="table-skeleton-row" key={index}>
+                <span />
+                <span />
+                <span />
+                <span />
+              </div>
+            ))}
+          </div>
         ) : certificados.length === 0 ? (
           <div className="table-empty">No se encontraron registros que coincidan con los filtros aplicados.</div>
+        ) : viewMode === 'grid' ? (
+          <div className="certificate-grid">
+            {certificados.map((cert) => {
+              const esCerrado = cert.estado_proceso === 'Cerrado';
+              const esObservado = cert.estado_proceso === 'Observado';
+
+              return (
+                <CertificateCard
+                  key={cert.folio_certificado}
+                  certificado={cert}
+                  montoFormateado={formatMonto(cert.monto_total_bruto)}
+                  onInspect={() => setCertificadoSeleccionado(cert)}
+                >
+                  <div className="certificate-card-actions">
+                    {esCerrado ? (
+                      <span className="badge-closed">🔒 Lote Cerrado</span>
+                    ) : esObservado ? (
+                      <span className="badge-warning">⚠️ Discrepancia</span>
+                    ) : (
+                      <button
+                        type="button"
+                        className={`btn-action-close ${!esAuditor ? 'btn-restricted' : ''}`}
+                        onClick={() => handleCerrarLote(cert.folio_certificado)}
+                        title={esAuditor ? 'Aprobar y Cerrar Lote Fiscal' : 'Acción reservada exclusivamente para Auditor nuam'}
+                      >
+                        {esAuditor ? 'Aprobar y Cerrar' : '🔒 Requiere Auditor'}
+                      </button>
+                    )}
+                    {puedeEliminar && (
+                      <button
+                        type="button"
+                        className="btn-icon-delete"
+                        onClick={() => setFolioAEliminar(cert.folio_certificado)}
+                        title={`Eliminar certificado ${cert.folio_certificado} y sus factores`}
+                        aria-label={`Eliminar certificado ${cert.folio_certificado}`}
+                      >
+                        <TrashIcon />
+                      </button>
+                    )}
+                  </div>
+                </CertificateCard>
+              );
+            })}
+          </div>
         ) : (
           <div className="table-responsive">
             <table className="nuam-table">
@@ -344,6 +429,42 @@ export const RepositoryView: React.FC<RepositoryViewProps> = ({ usuario }) => {
           </div>
         )}
       </div>
+
+      {certificadoSeleccionado && (
+        <div className="modal-backdrop" onClick={() => setCertificadoSeleccionado(null)}>
+          <div className="modal-dialog" onClick={(event) => event.stopPropagation()}>
+            <div className="modal-header">
+              <h3 className="modal-title">
+                Detalle del Certificado — {certificadoSeleccionado.folio_certificado}
+              </h3>
+              <button
+                type="button"
+                className="btn-close"
+                onClick={() => setCertificadoSeleccionado(null)}
+              >
+                ✕
+              </button>
+            </div>
+            <div className="modal-body">
+              <div className="inspector-grid">
+                <div><strong>Emisor:</strong> {certificadoSeleccionado.razon_social_emisor}</div>
+                <div><strong>RUT:</strong> {certificadoSeleccionado.rut_emisor_str || certificadoSeleccionado.rut_emisor}</div>
+                <div><strong>Año Tributario:</strong> {certificadoSeleccionado.anio_tributario}</div>
+                <div><strong>Monto Bruto:</strong> {formatMonto(certificadoSeleccionado.monto_total_bruto)}</div>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => setCertificadoSeleccionado(null)}
+              >
+                Cerrar Inspector
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal Confirmación Eliminación Individual */}
       {folioAEliminar && (

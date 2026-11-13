@@ -1,6 +1,7 @@
 import React from 'react';
 import type { UsuarioAutenticado } from '../types';
 import nuamLogo from '../assets/nuam-logo.png';
+import { useWindowScroll } from '../hooks/useWindowScroll';
 
 interface NavbarProps {
   usuario: UsuarioAutenticado | null;
@@ -15,8 +16,10 @@ export const Navbar: React.FC<NavbarProps> = ({
   onToggleMobileMenu,
   isMobileMenuOpen
 }) => {
+  const hasScrolled = useWindowScroll();
+
   return (
-    <header className="nuam-topbar">
+    <header className={`nuam-topbar ${hasScrolled ? 'is-scrolled' : ''}`}>
       <div className="topbar-left">
         {usuario && (
           <button
