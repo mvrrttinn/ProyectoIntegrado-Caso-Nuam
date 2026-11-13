@@ -6,19 +6,25 @@ export const RbacAdminView: React.FC = () => {
   const [roles, setRoles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [mensaje, setMensaje] = useState<{ tipo: 'success' | 'error'; texto: string } | null>(null);
+
+  // Modal Nuevo Usuario
   const [modalNuevo, setModalNuevo] = useState(false);
-
-  // Modal para cambiar contraseña
-  const [usuarioParaPass, setUsuarioParaPass] = useState<any | null>(null);
-  const [nuevaPasswordCustom, setNuevaPasswordCustom] = useState('');
-
-  // Formulario nuevo usuario
   const [nuevoNombre, setNuevoNombre] = useState('');
   const [nuevoRut, setNuevoRut] = useState('');
   const [nuevoEmail, setNuevoEmail] = useState('');
   const [nuevaPassword, setNuevaPassword] = useState('Nuam2026!');
   const [nuevaCorredora, setNuevaCorredora] = useState('LarrainVial S.A. Corredora');
   const [nuevoRolId, setNuevoRolId] = useState<number>(1);
+
+  // Modal Editar Usuario Completo
+  const [usuarioEditando, setUsuarioEditando] = useState<any | null>(null);
+  const [editNombre, setEditNombre] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [editCorredora, setEditCorredora] = useState('');
+  const [editRolId, setEditRolId] = useState<number>(1);
+  const [editEstado, setEditEstado] = useState('ACTIVO');
+  const [editPassword, setEditPassword] = useState('');
+
   const [guardando, setGuardando] = useState(false);
 
   const cargarDatos = async () => {
@@ -45,12 +51,60 @@ export const RbacAdminView: React.FC = () => {
     cargarDatos();
   }, []);
 
-  const handleCambiarRol = async (idUsuario: number, nuevoIdRol: number, nombreUser: string) => {
+  const abrirModalEditar = (u: any) => {
+    setUsuarioEditando(u);
+    setEditNombre(u.nombre || '');
+    setEditEmail(u.email || '');
+    setEditCorredora(u.id_corredora || 'LarrainVial S.A. Corredora');
+    setEditRolId(u.id_rol || 1);
+    setEditEstado(u.estado || 'ACTIVO');
+    setEditPassword('');
+    setMensaje(null);
+  };
+
+  const handleGuardarEdicion = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!usuarioEditando) return;
+
+    setGuardando(true);
+    setMensaje(null);
+
+    const payload: any = {
+      nombre: editNombre.trim(),
+      email: editEmail.trim(),
+      id_corredora: editCorredora.trim(),
+      id_rol: editRolId,
+      estado: editEstado
+    };
+
+    if (editPassword.trim()) {
+      payload.password = editPassword.trim();
+    }
+
     try {
-      await api.updateUsuarioRol(idUsuario, nuevoIdRol);
+      await api.updateUsuario(usuarioEditando.id_usuario, payload);
       setMensaje({
         tipo: 'success',
-        texto: `✅ Rol actualizado con éxito para ${nombreUser}. Evento registrado en la bitácora criptográfica con firma SHA-256.`
+        texto: `✅ Usuario '${editNombre || editEmail}' actualizado correctamente en Supabase PostgreSQL. Evento registrado con firma criptográfica SHA-256.`
+      });
+      setUsuarioEditando(null);
+      cargarDatos();
+    } catch (err: any) {
+      setMensaje({
+        tipo: 'error',
+        texto: err.message || 'Error al guardar los cambios del usuario.'
+      });
+    } finally {
+      setGuardando(false);
+    }
+  };
+
+  const handleCambiarRolRapido = async (idUsuario: number, nuevoIdRol: number, nombreUser: string) => {
+    try {
+      await api.updateUsuario(idUsuario, { id_rol: nuevoIdRol });
+      setMensaje({
+        tipo: 'success',
+        texto: `✅ Rol actualizado con éxito para ${nombreUser}. Firma digital emitida.`
       });
       cargarDatos();
     } catch (err: any) {
@@ -76,7 +130,7 @@ export const RbacAdminView: React.FC = () => {
       });
       setMensaje({
         tipo: 'success',
-        texto: `✅ Usuario '${nuevoNombre}' creado exitosamente con su contraseña personalizada configurada y código MFA activo.`
+        texto: `✅ Usuario '${nuevoNombre}' registrado exitosamente en la plataforma nuam.`
       });
       setModalNuevo(false);
       setNuevoNombre('');
@@ -94,36 +148,13 @@ export const RbacAdminView: React.FC = () => {
     }
   };
 
-  const handleGuardarNuevaPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!usuarioParaPass || !nuevaPasswordCustom) return;
-
-    setGuardando(true);
-    try {
-      await api.updateUsuario(usuarioParaPass.id_usuario, { password: nuevaPasswordCustom });
-      setMensaje({
-        tipo: 'success',
-        texto: `✅ Contraseña personalizada actualizada con éxito para '${usuarioParaPass.nombre || usuarioParaPass.email}'. Hasheada con PBKDF2 en la base de datos.`
-      });
-      setUsuarioParaPass(null);
-      setNuevaPasswordCustom('');
-    } catch (err: any) {
-      setMensaje({
-        tipo: 'error',
-        texto: err.message || 'Error al actualizar la contraseña.'
-      });
-    } finally {
-      setGuardando(false);
-    }
-  };
-
   return (
     <div className="rbac-view-container">
       <div className="view-header">
         <div>
           <h2 className="view-title">Gobernanza de Accesos y Seguridad RBAC (CU-07)</h2>
           <p className="view-subtitle">
-            Administración de privilegios, asignación dinámica de roles y contraseñas personalizadas (ISO/IEC 27001).
+            Administración completa de usuarios: edición de nombres, correos, roles institucionales y contraseñas (ISO/IEC 27001).
           </p>
         </div>
         <div className="view-actions">
@@ -202,13 +233,13 @@ export const RbacAdminView: React.FC = () => {
         </div>
       </div>
 
-      {/* Tabla de Usuarios Registrados y Asignación de Roles */}
+      {/* Tabla de Usuarios Registrados y Edición */}
       <div className="content-card">
         <div className="card-header-flex">
           <div>
-            <h3 className="card-title">Directorio de Usuarios y Asignación de Roles</h3>
+            <h3 className="card-title">Directorio de Usuarios de la Plataforma</h3>
             <p className="card-subtitle">
-              Cambia el rol de un usuario directamente desde el desplegable o personaliza su contraseña de acceso.
+              Puedes cambiar el rol rápidamente o hacer clic en "Editar" para modificar el nombre, correo, corredor o contraseña.
             </p>
           </div>
           <span className="badge-audit-count">{usuarios.length} Usuarios Registrados</span>
@@ -225,23 +256,24 @@ export const RbacAdminView: React.FC = () => {
                   <th>RUT</th>
                   <th>Correo Institucional</th>
                   <th>Institución / Corredora</th>
-                  <th>Rol Actual / Asignar Nuevo Rol</th>
-                  <th>Seguridad</th>
+                  <th>Rol Asignado</th>
                   <th>Estado</th>
+                  <th>Acción</th>
                 </tr>
               </thead>
               <tbody>
                 {usuarios.map((u) => (
                   <tr key={u.id_usuario}>
                     <td className="font-bold">{u.nombre || 'Sin nombre'}</td>
-                    <td className="font-mono">{u.rut}</td>
-                    <td>{u.email}</td>
+                    <td className="font-mono text-sm">{u.rut}</td>
+                    <td className="text-sm">{u.email}</td>
                     <td>{u.id_corredora}</td>
                     <td>
                       <select
                         className="form-select text-sm py-1 font-semibold"
                         value={u.id_rol}
-                        onChange={(e) => handleCambiarRol(u.id_usuario, Number(e.target.value), u.nombre || u.email)}
+                        onChange={(e) => handleCambiarRolRapido(u.id_usuario, Number(e.target.value), u.nombre || u.email)}
+                        title="Cambio rápido de rol"
                       >
                         {roles.map((r) => (
                           <option key={r.id_rol} value={r.id_rol}>
@@ -251,21 +283,19 @@ export const RbacAdminView: React.FC = () => {
                       </select>
                     </td>
                     <td>
-                      <button
-                        type="button"
-                        className="btn-action-sm"
-                        onClick={() => {
-                          setUsuarioParaPass(u);
-                          setNuevaPasswordCustom('');
-                        }}
-                      >
-                        🔑 Cambiar Clave
-                      </button>
-                    </td>
-                    <td>
                       <span className={`status-pill ${u.estado === 'ACTIVO' ? 'status-aprobado' : 'status-observado'}`}>
                         {u.estado}
                       </span>
+                    </td>
+                    <td>
+                      <button
+                        type="button"
+                        className="btn-action-sm"
+                        onClick={() => abrirModalEditar(u)}
+                        title="Editar nombre, correo, corredora y contraseña"
+                      >
+                        ✏️ Editar
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -275,7 +305,130 @@ export const RbacAdminView: React.FC = () => {
         )}
       </div>
 
-      {/* Modal Crear Nuevo Usuario */}
+      {/* Modal Editar Usuario Completo */}
+      {usuarioEditando && (
+        <div className="modal-backdrop" onClick={() => setUsuarioEditando(null)}>
+          <div className="modal-dialog modal-lg" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3 className="modal-title">Editar Usuario — {usuarioEditando.nombre || usuarioEditando.email}</h3>
+              <button type="button" className="btn-close" onClick={() => setUsuarioEditando(null)}>✕</button>
+            </div>
+            <form onSubmit={handleGuardarEdicion}>
+              <div className="modal-body">
+                <div className="form-row mb-4">
+                  <div className="form-group flex-2">
+                    <label htmlFor="edit-nombre">Nombre Completo:</label>
+                    <input
+                      id="edit-nombre"
+                      type="text"
+                      className="form-input"
+                      value={editNombre}
+                      onChange={(e) => setEditNombre(e.target.value)}
+                      placeholder="Nombre del usuario"
+                      required
+                    />
+                  </div>
+                  <div className="form-group flex-1">
+                    <label htmlFor="edit-rut">RUT Fiscal (Identificador):</label>
+                    <input
+                      id="edit-rut"
+                      type="text"
+                      className="form-input font-mono"
+                      value={usuarioEditando.rut}
+                      disabled
+                      title="El RUT no se puede modificar por integridad de auditoría"
+                    />
+                  </div>
+                </div>
+
+                <div className="form-row mb-4">
+                  <div className="form-group flex-2">
+                    <label htmlFor="edit-email">Correo Electrónico Institucional:</label>
+                    <input
+                      id="edit-email"
+                      type="email"
+                      className="form-input"
+                      value={editEmail}
+                      onChange={(e) => setEditEmail(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="form-group flex-1">
+                    <label htmlFor="edit-estado">Estado de la Cuenta:</label>
+                    <select
+                      id="edit-estado"
+                      className="form-select"
+                      value={editEstado}
+                      onChange={(e) => setEditEstado(e.target.value)}
+                    >
+                      <option value="ACTIVO">ACTIVO (Habilitado)</option>
+                      <option value="INACTIVO">INACTIVO (Bloqueado)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="form-row mb-4">
+                  <div className="form-group flex-1">
+                    <label htmlFor="edit-corredora">Institución o Corredora:</label>
+                    <input
+                      id="edit-corredora"
+                      type="text"
+                      className="form-input"
+                      value={editCorredora}
+                      onChange={(e) => setEditCorredora(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="form-group flex-1">
+                    <label htmlFor="edit-rol">Rol Institucional (RBAC):</label>
+                    <select
+                      id="edit-rol"
+                      className="form-select"
+                      value={editRolId}
+                      onChange={(e) => setEditRolId(Number(e.target.value))}
+                    >
+                      {roles.map((r) => (
+                        <option key={r.id_rol} value={r.id_rol}>
+                          {r.nombre_rol}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="form-group mb-4">
+                  <label htmlFor="edit-pass">
+                    Nueva Contraseña de Acceso <span className="text-xs text-muted">(Opcional: déjala en blanco para mantener la actual)</span>:
+                  </label>
+                  <input
+                    id="edit-pass"
+                    type="text"
+                    className="form-input font-mono"
+                    value={editPassword}
+                    onChange={(e) => setEditPassword(e.target.value)}
+                    placeholder="•••••••••••• (Escribe una nueva clave solo si deseas cambiarla)"
+                  />
+                </div>
+
+                <div className="alert-box-notice">
+                  ℹ️ Cualquier modificación quedará auditada de forma inmutable en <code>TB_AUDIT_LOGS</code> con el identificador del Administrador y firma criptográfica SHA-256.
+                </div>
+              </div>
+
+              <div className="modal-footer">
+                <button type="button" className="btn-secondary mr-2" onClick={() => setUsuarioEditando(null)}>
+                  Cancelar
+                </button>
+                <button type="submit" className="btn-primary" disabled={guardando}>
+                  {guardando ? 'Guardando cambios...' : 'Guardar Cambios'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Registrar Nuevo Usuario */}
       {modalNuevo && (
         <div className="modal-backdrop" onClick={() => setModalNuevo(false)}>
           <div className="modal-dialog" onClick={(e) => e.stopPropagation()}>
@@ -368,7 +521,7 @@ export const RbacAdminView: React.FC = () => {
                 </div>
 
                 <div className="alert-box-notice">
-                  ℹ️ La contraseña se cifrará de forma irreversible mediante el algoritmo <code>PBKDF2 SHA-256</code> en cumplimiento de la norma ISO/IEC 27001. El código MFA asignado será cualquier código numérico de 6 dígitos.
+                  ℹ️ La contraseña se cifrará de forma irreversible mediante el algoritmo <code>PBKDF2 SHA-256</code> en cumplimiento de la norma ISO/IEC 27001.
                 </div>
               </div>
 
@@ -378,47 +531,6 @@ export const RbacAdminView: React.FC = () => {
                 </button>
                 <button type="submit" className="btn-primary" disabled={guardando}>
                   {guardando ? 'Guardando...' : 'Crear Usuario'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Modal Cambiar Contraseña de Usuario */}
-      {usuarioParaPass && (
-        <div className="modal-backdrop" onClick={() => setUsuarioParaPass(null)}>
-          <div className="modal-dialog" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3 className="modal-title">Cambiar Contraseña — {usuarioParaPass.nombre || usuarioParaPass.email}</h3>
-              <button type="button" className="btn-close" onClick={() => setUsuarioParaPass(null)}>✕</button>
-            </div>
-            <form onSubmit={handleGuardarNuevaPassword}>
-              <div className="modal-body">
-                <p className="text-sm text-muted mb-4">
-                  Ingresa una nueva contraseña personalizada para el usuario con RUT <strong>{usuarioParaPass.rut}</strong>:
-                </p>
-
-                <div className="form-group mb-4">
-                  <label htmlFor="input-new-pass">Nueva Contraseña:</label>
-                  <input
-                    id="input-new-pass"
-                    type="text"
-                    className="form-input font-mono"
-                    value={nuevaPasswordCustom}
-                    onChange={(e) => setNuevaPasswordCustom(e.target.value)}
-                    placeholder="Escribe la nueva contraseña personalizada"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="modal-footer">
-                <button type="button" className="btn-secondary mr-2" onClick={() => setUsuarioParaPass(null)}>
-                  Cancelar
-                </button>
-                <button type="submit" className="btn-primary" disabled={guardando}>
-                  {guardando ? 'Actualizando...' : 'Guardar Nueva Contraseña'}
                 </button>
               </div>
             </form>

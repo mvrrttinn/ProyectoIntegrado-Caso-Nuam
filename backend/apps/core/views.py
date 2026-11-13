@@ -371,6 +371,24 @@ class UsuarioDetailView(APIView):
         if not usuario:
             return Response({'error': 'Usuario no encontrado'}, status=status.HTTP_404_NOT_FOUND)
 
+        # Actualizar campos de perfil
+        nombre = request.data.get('nombre')
+        if nombre is not None:
+            usuario.nombre = nombre.strip()
+
+        email = request.data.get('email')
+        if email is not None:
+            email_limpio = email.strip().lower()
+            # Validar unicidad si cambió el correo
+            if email_limpio != usuario.email.lower():
+                if Usuario.objects.filter(email__iexact=email_limpio).exclude(pk=pk).exists():
+                    return Response({'error': 'El correo electrónico ya está registrado por otro usuario.'}, status=status.HTTP_400_BAD_REQUEST)
+                usuario.email = email_limpio
+
+        id_corredora = request.data.get('id_corredora')
+        if id_corredora is not None:
+            usuario.id_corredora = id_corredora.strip()
+
         id_rol = request.data.get('id_rol')
         if id_rol:
             rol = Rol.objects.filter(id_rol=id_rol).first()
@@ -383,18 +401,24 @@ class UsuarioDetailView(APIView):
             usuario.estado = estado
 
         password = request.data.get('password')
-        if password:
-            usuario.cambiar_contrasena(password)
+        if password and str(password).strip():
+            usuario.cambiar_contrasena(password.strip())
 
         usuario.save()
 
-        detalles_audit = {'usuario_afectado': usuario.email, 'nuevo_rol': usuario.id_rol.nombre_rol}
-        if password:
+        detalles_audit = {
+            'usuario_afectado': usuario.email,
+            'nombre': usuario.nombre,
+            'nuevo_rol': usuario.id_rol.nombre_rol,
+            'corredora': usuario.id_corredora,
+            'estado': usuario.estado
+        }
+        if password and str(password).strip():
             detalles_audit['password_modificada'] = True
 
         AuditAlertsService.registrar_evento(
             usuario=request.user,
-            accion="ACTUALIZACION_USUARIO_RBAC",
+            accion="EDICION_PERFIL_USUARIO_RBAC",
             detalles_extra=detalles_audit
         )
 

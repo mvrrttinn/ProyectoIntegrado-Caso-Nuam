@@ -212,7 +212,7 @@ class ApiClient {
     return this.updateUsuario(idUsuario, { id_rol: idRol });
   }
 
-  async updateUsuario(idUsuario: number, data: { id_rol?: number; password?: string; estado?: string }): Promise<any> {
+  async updateUsuario(idUsuario: number, data: any): Promise<any> {
     const res = await fetch(`${API_BASE_URL}/usuarios/${idUsuario}/`, {
       method: 'PATCH',
       headers: this.getHeaders(),
@@ -220,7 +220,7 @@ class ApiClient {
     });
     if (!res.ok) {
       const err = await res.json();
-      throw new Error(err.error || 'Error al actualizar usuario.');
+      throw new Error(err.error || err.mensaje || 'Error al actualizar usuario.');
     }
     return res.json();
   }
